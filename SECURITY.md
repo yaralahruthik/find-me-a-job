@@ -10,7 +10,10 @@ protections that follow from it.
 
 - **Your data never leaves your machine through this tool.** The scripts
   (`scripts/*.mjs`) make **no network calls** — they import only `node:fs`,
-  `node:path`, `node:url`, and `yaml`. The single external process is a local
+  `node:path`, `node:url`, and `yaml` (the two repo-safety/bootstrap scripts,
+  `guard.mjs` and `setup.mjs`, additionally spawn fixed-argument `git`/`npm`
+  commands; `setup.mjs` reaches the network only via `npm ci`/`npx playwright
+  install`, which download code, never your data). The single external process is a local
   headless Chromium that renders your resume HTML to a PDF (`resume build --pdf`),
   and that render runs with **JavaScript disabled and all network requests
   blocked** (`scripts/resume.mjs`), so a crafted resume field can't turn it into a
@@ -75,6 +78,11 @@ directory, so they can't traverse out of it.
   hash-pinned by this repo; it comes from Playwright.
 - This repo defines **no install lifecycle scripts** (no `preinstall`/`postinstall`),
   so cloning and `npm ci` run no code from this repo at install time.
+- **`npm run setup`** (`scripts/setup.mjs`) is the explicit, opt-in bootstrap: it
+  spawns only fixed-argument commands (`npm ci`, `git config core.hooksPath
+  .githooks`, and `npx playwright install chromium` only under `--pdf`), never a
+  shell, never a personal file. `--check` is read-only. Alongside `guard.mjs`,
+  it is one of the two scripts that use `child_process` at all.
 
 ## Reporting a vulnerability
 

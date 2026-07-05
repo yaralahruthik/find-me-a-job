@@ -28,17 +28,18 @@ Every write goes through the same ritual: show the diff, confirm, validate. Bad 
 
 ## Get started
 
-Requires Node ≥ 18.
+Requires Node ≥ 18. Two commands:
 
 ```bash
-npm ci                               # dependencies: yaml, playwright (lockfile-pinned)
-npx playwright install chromium      # one-time, optional: only used to render resume PDFs
-git config core.hooksPath .githooks  # opt in to the personal-data commit guard
+git clone https://github.com/yaralahruthik/find-me-a-job.git
+cd find-me-a-job
 ```
 
-Your tracker and numbers work the instant `npm ci` finishes. The browser step only powers PDF rendering; if you skip it you still get the HTML resume and can print to PDF yourself (Cmd/Ctrl+P). The hooks line enables a pre-commit check that refuses to commit your personal files.
+Then open the folder in your agent and say `/fh init`. It checks your environment, installs anything missing (with your consent), and walks you through the 20-30 minute onboarding: profile, resume intake, tracker with your real recent history, and your first week's numbers.
 
-Then open the repo in your agent:
+Prefer the terminal? `npm run setup` does the environment part in one command (add `-- --pdf` for one-command PDF resumes; skipping it is fine, the HTML resume prints to PDF with Cmd/Ctrl+P). Setup also wires a pre-commit guard that refuses to commit your personal files.
+
+Pick your agent:
 
 | Agent | Entry point | How to invoke |
 | --- | --- | --- |
@@ -48,13 +49,6 @@ Then open the repo in your agent:
 | Cursor | `AGENTS.md` (native) + `.cursor/skills/fh/SKILL.md` | `/fh` skill, or just type "fh status" |
 
 Any other agent starts at [`AGENTS.md`](AGENTS.md); it carries the same instructions, and every example in this README works as plain text (`fh status` instead of `/fh status`).
-
-First run:
-
-```
-/fh init       # ~20-30 min onboarding: resume intake, positioning, proof audit,
-                # tracker + 30-day backfill, seed leads, targets, first numbers
-```
 
 ## Day to day
 

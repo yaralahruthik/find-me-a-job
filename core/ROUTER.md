@@ -90,3 +90,8 @@ For lead ingestion (reads the tracker only to dedup + avoid id collisions; never
 For repo safety (a public-repo guard against committing personal data — see `SECURITY.md`):
 
 - `node scripts/guard.mjs staged` — refuse the commit if any personal-data file (`config/*.yaml`, `config/tailor/`, `config/assets/`, `data/*`, except `*.example.yaml`) is staged. Exit 1 if any are. Opt in as a hook once with `git config core.hooksPath .githooks`.
+
+For environment bootstrap (`/fh init` step 0; touches tooling only, never personal data):
+
+- `node scripts/setup.mjs --check [--json]` — read-only readiness doctor (node, deps, guard hook, PDF browser, config presence); exit 0 ready, 1 not.
+- `node scripts/setup.mjs [--pdf]` — install deps if missing (`npm ci`), wire the guard hook, optionally install the PDF browser. Explicit invocation only — never an install lifecycle hook.

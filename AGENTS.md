@@ -30,7 +30,7 @@ If `validate` fails, fix the data before showing any metrics. Show the YAML diff
 
 ## Setup
 
-`npm ci` (dependencies: `yaml`, `playwright`). Node ≥ 18. For PDF resumes, once: `npx playwright install chromium`. Then run the `init` playbook. The tracker/metrics never import Playwright, so they work without the browser step.
+Node ≥ 18. One command: `npm run setup` (installs the lockfile-pinned deps if missing, wires the pre-commit personal-data guard; add `-- --pdf` for the PDF browser). Or manually: `npm ci`, optional `npx playwright install chromium`, `git config core.hooksPath .githooks`. The `init` playbook's step 0 runs `node scripts/setup.mjs --check --json` and performs setup for the user if needed — the tracker/metrics never import Playwright, so everything but PDFs works without the browser step.
 
 ## Portability note
 

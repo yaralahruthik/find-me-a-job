@@ -10,6 +10,7 @@
     "node": ">=18"
   },
   "scripts": {
+    "setup": "node scripts/setup.mjs",
     "validate": "node scripts/pipeline.mjs validate",
     "metrics": "node scripts/pipeline.mjs metrics",
     "interviews": "node scripts/pipeline.mjs interviews",

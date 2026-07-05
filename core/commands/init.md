@@ -6,6 +6,16 @@ If `config/profile.yaml` already exists, this is a re-run: ask whether to update
 
 Tell the user up front: *"This takes about 20–30 minutes. We'll set up your profile, look at your resume, build your tracker with your real recent history, and end with your first week's numbers. Nothing here judges you — it makes the search legible."*
 
+## 0. Environment
+
+Before the interview, make sure the tooling exists — the user should never have to leave the conversation for terminal setup. Run:
+
+```
+node scripts/setup.mjs --check --json
+```
+
+If `ready` is false (or the file can't run because Node is missing entirely), say what's missing in one line and run `node scripts/setup.mjs` for them — it installs the lockfile-pinned dependencies if absent and wires the pre-commit personal-data guard, nothing else; show its output. Offer `node scripts/setup.mjs --pdf` if they want one-command PDF resumes now (skippable — HTML + Cmd/Ctrl+P always works, and the tracker never needs the browser). This step never touches personal data; it only prepares tooling. Then start the interview.
+
 ## 1. Intake
 
 Ask for their **resume and/or a LinkedIn profile export** — both is better context, either is fine, neither is OK too (we can draft positioning from conversation). Whatever they give:
