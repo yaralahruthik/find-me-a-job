@@ -14,7 +14,7 @@ Run `node scripts/pipeline.mjs metrics --json` and report, from the script only 
 
 ### 2. Fill and tag leads toward ~20
 
-A pipeline starves without leads. If the open-lead count is thin, spend the session topping it up — route each new lead through `core/commands/log.md` (every lead needs a link and an honest `channel`). For a **batch** of URLs you found, `core/commands/leads.md` (`/fh leads`) ingests them into deduped, id-assigned candidate rows first. Match the channel mix to the profile's segment:
+A pipeline starves without leads. If the open-lead count is thin, spend the session topping it up — route each new lead through `core/commands/log.md` (every lead needs a link and an honest `channel`). For a **batch** of URLs you found, `core/commands/leads.md` (`/fh leads`) ingests them into deduped, id-assigned candidate rows first. A lead-starved list can also be topped up by **naming target companies**: `/fh leads` reads a named company's careers page and lists its openings for the user to pick from. Match the channel mix to the profile's segment:
 - **Product companies:** referrals first, always — alumni and ex-colleagues are the road in; cold portal supplements.
 - **Startups:** direct outreach with a live project link, plus startup aggregators. Speed matters.
 - **Service companies:** portals and drives carry volume; referrals still help.

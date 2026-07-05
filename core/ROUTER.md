@@ -15,7 +15,7 @@ This is the CLI-agnostic routing table for the `fh` system. A host wrapper (Clau
 | `resume` | `core/commands/resume.md` | Render a tailored, ATS-safe resume from `config/resume.yaml` |
 | `evaluate` *(or `jd`)* | `core/commands/evaluate.md` | Read a pasted JD: pick the resume framing, coverage-check keywords, capture proof gaps |
 | `source` *(or `outreach`)* | `core/commands/source.md` | Work the referral & outreach channels: fill leads, draft a specific ask, quality-check it, log it |
-| `leads` *(or `ingest`)* | `core/commands/leads.md` | Turn a batch of found job URLs into deduped, id-assigned candidate lead rows to confirm and log |
+| `leads` *(or `ingest`)* | `core/commands/leads.md` | Turn found job URLs, or a named company's careers-page openings, into deduped, id-assigned candidate lead rows to confirm and log |
 | `two-month-test` *(or `capture`, `get-me-numbers`)* | `core/commands/two-month-test.md` | Capture a just-shipped feature's numbers while they're fresh: excavate the metric, draft an evidence bullet, fold it into `config/resume.yaml` |
 | `loop` *(or `interview`, `prep`, `debrief`)* | `core/commands/loop.md` | Prep the interview loop on its actual content, run the seniority-fit check, and debrief each round while it's fresh into `data/debriefs/<entry-id>.md` |
 | `validate` | `core/commands/validate.md` | Check `data/pipeline.yaml` and fix any problems |
@@ -38,7 +38,7 @@ fh — run your search as a measured system.
   /fh resume    render a tailored resume (by segment)
   /fh evaluate  read a JD: which resume to send, what proof it wants (alias: jd)
   /fh source    fill leads, draft a referral/outreach ask, log it (alias: outreach)
-  /fh leads     turn found job URLs into confirmed lead rows (alias: ingest)
+  /fh leads     turn job URLs or a named company's openings into confirmed lead rows (alias: ingest)
   /fh two-month-test  just shipped? capture the numbers now, before they fade (aliases: capture, get-me-numbers)
   /fh loop      prep your interviews and debrief each round while fresh (aliases: interview, prep, debrief)
   /fh validate  check your tracker is clean

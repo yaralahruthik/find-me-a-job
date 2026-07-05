@@ -23,7 +23,7 @@ name: Ada Lovelace
 headline: Senior Product Engineer        # your positioning, in one line
 location: Remote
 email: ada@example.com
-phone: null                              # optional
+phone: "+91 90000 00000"                 # required at init; recruiters still call
 links:
   - label: github.com/ada
     url: https://github.com/ada

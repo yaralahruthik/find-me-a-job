@@ -126,9 +126,9 @@ The draft gets a deterministic quality check that flags the ways an ask gets ign
 
 ## Filling your lead list
 
-A pipeline starves without leads. `/fh leads` (alias: `ingest`) takes a batch of job URLs you found and turns them into deduped, id-assigned candidate rows you confirm and log, so filling the list to twenty stops being twenty rounds of copy-paste.
+A pipeline starves without leads. `/fh leads` (alias: `ingest`) takes a batch of job URLs you found and turns them into deduped, id-assigned candidate rows you confirm and log, so filling the list to twenty stops being twenty rounds of copy-paste. Or just name a company: the tool finds its official careers page and lists every relevant opening (never a job board, never an aggregator).
 
-Paste each link (ideally with the company + role copied from the posting): the tool assigns a unique id, defaults the channel from the host (aggregators → `cold-portal`), flags anything it had to **guess** so you confirm it, and sets aside URLs already in your tracker, because a lead is never counted twice. It **never decides which jobs deserve an application**; that's your positioning statement's job. And it never fabricates a company, role, or channel: confirmed rows go in through the same diff-and-validate ritual as everything else. A pasted bookmark is a **lead, not an application**.
+Paste each link (ideally with the company + role copied from the posting): the tool assigns a unique id, defaults the channel from the host (aggregators → `cold-portal`), flags anything it had to **guess** so you confirm it, and sets aside URLs already in your tracker, because a lead is never counted twice. It **never decides which jobs deserve an application**; that's your positioning statement's job. When it finds openings for you, it lists them all, marks which fit your positioning and experience, and you pick. And it never fabricates a company, role, or channel: confirmed rows go in through the same diff-and-validate ritual as everything else. A pasted bookmark is a **lead, not an application**.
 
 ## Interview loops
 
