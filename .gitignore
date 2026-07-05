@@ -1,0 +1,13 @@
+node_modules/
+
+# Personal data — never committed. Ignore by directory/pattern (not by exact
+# filename) so a NEW personal file under config/ can't slip through. Only the
+# committed *.example.yaml templates are re-included.
+config/*.yaml
+config/*.pdf
+!config/*.example.yaml
+config/tailor/
+config/assets/
+data/*
+!data/.gitkeep
+!data/pipeline.example.yaml

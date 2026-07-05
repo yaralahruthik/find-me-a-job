@@ -1,0 +1,35 @@
+# Fixture: violates each RESUME-RULES lint check exactly once.
+# pronoun (bullet), buzzword (bullet), references (summary), order (experience
+# out of reverse-chron), gap (>6 months), bullets (8 in one role), contact
+# (no phone + non-name-based email).
+name: Test Person
+headline: Software Engineer
+email: xxdragonslayerxx@example.com
+summary: References available upon request.
+experience:
+  - company: Old Co
+    role: Engineer
+    start: 2020-01
+    end: 2021-03
+    bullets:
+      - text: Cut build time 40% by caching 3 dependency layers
+  - company: New Co
+    role: Senior Engineer
+    start: 2021-12
+    end: present
+    bullets:
+      - text: I shipped the billing rewrite serving 20000 users
+      - text: Team player who improved 3 dashboards
+      - text: Raised checkout conversion 12% by removing 2 steps
+      - text: Cut p95 latency 800ms to 210ms across 4 services
+      - text: Migrated 12 services to TypeScript in 6 weeks
+      - text: Reduced infra spend 18% by rightsizing 40 nodes
+      - text: Onboarded 5 engineers with a 2-day bootcamp
+      - text: Automated 30 manual QA checks into CI
+education:
+  - school: Older University
+    degree: B.S. Something
+    year: 2015
+  - school: Newer University
+    degree: M.S. Something
+    year: 2019

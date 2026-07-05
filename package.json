@@ -1,0 +1,30 @@
+{
+  "name": "find-me-a-job",
+  "version": "0.1.0",
+  "description": "Agent-native job-search operating system: a strict pipeline tracker, deterministic metrics, and a weekly review ritual. The philosophy is law.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "repository": "github:yaralahruthik/find-me-a-job",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "validate": "node scripts/pipeline.mjs validate",
+    "metrics": "node scripts/pipeline.mjs metrics",
+    "interviews": "node scripts/pipeline.mjs interviews",
+    "trends": "node scripts/pipeline.mjs trends",
+    "velocity": "node scripts/pipeline.mjs velocity",
+    "migrate": "node scripts/pipeline.mjs migrate",
+    "resume": "node scripts/resume.mjs",
+    "source": "node scripts/source.mjs",
+    "leads": "node scripts/leads.mjs",
+    "two-month-test": "node scripts/resume.mjs bullet",
+    "guard": "node scripts/guard.mjs staged",
+    "test": "node --test \"scripts/**/*.test.mjs\""
+  },
+  "dependencies": {
+    "yaml": "^2.5.0",
+    "playwright": "^1.47.0"
+  }
+}

@@ -1,0 +1,35 @@
+version: 1
+# Known time-in-stage spans, plus deliberately-stale open rows and one fresh row.
+entries:
+  - id: va
+    company: Alpha
+    role: FE
+    link: https://x.example/va
+    channel: cold-portal
+    stage: response
+    closed: false
+    history:
+      - { stage: applied,  date: 2026-06-01 }
+      - { stage: response, date: 2026-06-08 }   # applied->response 7d
+  - id: vb
+    company: Bravo
+    role: FE
+    link: https://x.example/vb
+    channel: cold-portal
+    stage: screen
+    closed: false
+    history:
+      - { stage: applied,  date: 2026-06-02 }
+      - { stage: response, date: 2026-06-06 }   # applied->response 4d
+      - { stage: screen,   date: 2026-06-10 }   # response->screen 4d
+  - id: vc
+    company: Charlie
+    role: FE
+    link: https://x.example/vc
+    channel: cold-portal
+    stage: response
+    closed: false
+    history:
+      - { stage: applied,  date: 2026-06-03 }
+      - { stage: response, date: 2026-06-05 }   # applied->response 2d
+asks: []

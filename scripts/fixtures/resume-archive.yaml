@@ -1,0 +1,20 @@
+version: 1
+name: Archie Record
+headline: Product Engineer
+email: archie@example.com
+experience:
+  - company: Old Systems Inc.
+    role: Backend Engineer
+    location: Remote
+    start: 2019-01
+    end: 2021-06
+    bullets:
+      - id: core
+        text: "Shipped the reporting core to 40 teams; cut close time 6h to 20min."
+        segments: []
+      - id: legacy-cobol
+        text: "Migrated 12 mainframe batch jobs to a modern queue; cut run time 8h to 45min."
+        segments: [archive]
+      - id: prod-only
+        text: "Launched the usage dashboard; adopted by 15 customers in 2 months."
+        segments: [product]

@@ -1,0 +1,22 @@
+version: 1
+name: Dash Tester
+headline: Product Engineer
+email: dash@example.com
+experience:
+  - company: Range Co.
+    role: Engineer
+    start: 2023-01
+    end: present
+    bullets:
+      - id: emdash
+        text: "Shipped the core product — dashboards, alerts, forecasting — used by 40 teams."
+        segments: []
+      - id: endash
+        text: "Cut page load 30s to 3–4s for 12 surfaces."
+        segments: []
+projects:
+  - name: Side Thing
+    bullets:
+      - id: side
+        text: "Deployed for 200 users."
+        segments: []

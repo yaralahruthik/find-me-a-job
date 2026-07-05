@@ -1,0 +1,93 @@
+# config/resume.yaml — the MASTER CAREER RECORD: everything you have ever done,
+# unbounded by page size. Every rendered resume, standard or tailored, is a
+# selection from this one file — so the system always has your full history.
+# Copy this to config/resume.yaml (gitignored) at /fh proof or /fh init, then
+# `node scripts/resume.mjs build --segment product` renders a tailored, ATS-safe
+# resume into data/out/. One YAML, every tailored variant. See core/SCHEMA.md.
+#
+# Tailoring rule: a bullet with no `segments:` (or an empty list) always appears.
+# A bullet with `segments: [product, ai]` appears only when you build for one of
+# those segments. `segments: [archive]` (exclusive) keeps a bullet in the record
+# but ships it in NO build — old jobs, superseded work, deep cuts. Never delete a
+# true bullet for space; archive it. `--segment all` is the master/audit view and
+# includes everything. Keep every bullet TRUE — tailoring reorders and hides your
+# own real work; it never invents.
+#
+# Give bullets you might tailor a short `id:` — unique across the whole file.
+# Per-application overlays (config/tailor/<entry-id>.yaml) reference these ids to
+# pin/drop bullets for one JD — `include:` can even resurrect an archived one.
+# See config/tailor.example.yaml and core/SCHEMA.md.
+version: 1
+
+name: Ada Lovelace
+headline: Senior Product Engineer        # your positioning, in one line
+location: Remote
+email: ada@example.com
+phone: null                              # optional
+links:
+  - label: github.com/ada
+    url: https://github.com/ada
+  - label: ada.dev
+    url: https://ada.dev
+
+# A `summary:` field is supported but omitted by default — spend the space on
+# evidence bullets. If you add one, keep it to 1-2 sentences and avoid em dashes
+# (use commas/colons); the renderer normalizes them anyway.
+
+# Optional. Reorder the rendered sections; sections you omit keep their default
+# order (experience, projects, skills, education) after the listed ones.
+# A fresh grad usually puts education first:
+# section_order: [education, experience, projects, skills]
+
+# Optional role presets. The same person is often framed different ways depending on
+# the JD — "Product Engineer" here, "Full-Stack Engineer" there. A preset bundles a
+# headline + a set of segments to include, so you name each framing once:
+#   node scripts/resume.mjs build --role fullstack   → data/out/resume-fullstack.html
+# An application overlay can also set `role: fullstack`. Multi-segment builds work
+# without a preset too: `build --segment product,frontend` unions the two.
+roles:
+  product:   { headline: "Senior Product Engineer", segments: [product] }
+  fullstack: { headline: "Full-Stack Engineer",     segments: [product, frontend] }
+
+experience:
+  - company: Analytical Engines Inc.
+    role: Founding Engineer
+    location: Remote
+    start: 2024-01                       # YYYY-MM
+    end: present                         # YYYY-MM or "present"
+    bullets:
+      - id: analytics-product              # optional, unique; lets overlays pin/drop it
+        text: "Shipped the core analytics product to 6+ paying customers monitoring $3M+ in spend."
+        segments: []                       # always included
+      - id: public-api
+        text: "Built and shipped a public API adopted by 5 enterprise customers."
+        segments: [product, ai]
+      - id: perf-replatform
+        text: "Cut build time 4min→40s and page load ~30s→3s across the app."
+        segments: [product, frontend]
+      - id: legacy-migration                 # archived: in the record, in no build;
+        text: "Migrated the legacy reporting stack to the new pipeline over 3 months."
+        segments: [archive]                  # resurrect for one JD via overlay include:
+
+# Projects is OPTIONAL. Include it only if your professional experience is thin or
+# absent, or a project is genuinely extraordinary. If your experience carries you,
+# delete this section (the renderer omits it when empty) and let Experience do the work.
+projects:
+  - name: Difference Engine
+    url: https://difference.example.com
+    role: Creator
+    bullets:
+      - id: de-users
+        text: "Deployed at a real URL with 1,500+ users and 20+ paying customers."
+        segments: []
+
+skills:
+  - group: Languages
+    items: [TypeScript, Python]
+  - group: Frameworks
+    items: [React, Next.js, FastAPI]
+
+education:
+  - school: Example University
+    degree: B.S. Computer Science
+    year: 2022

@@ -1,0 +1,5 @@
+#!/bin/sh
+# Refuse a commit that would include personal-data files. Opt in once with:
+#   git config core.hooksPath .githooks
+# See SECURITY.md. Bypass in a genuine emergency with `git commit --no-verify`.
+node scripts/guard.mjs staged

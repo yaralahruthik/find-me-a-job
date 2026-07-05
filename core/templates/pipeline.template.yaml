@@ -1,0 +1,26 @@
+# Your pipeline. One row per application or lead. See core/SCHEMA.md for the full contract.
+# Keep it honest and keep it current — you are the only reader. Silence is data; log it.
+version: 1
+
+entries: []
+# Example of one entry (delete this comment block once you have real rows):
+#   - id: company-role
+#     company: Company
+#     role: Frontend Engineer
+#     link: https://…            # a lead IS a URL
+#     channel: referral          # cold-portal | referral | outreach | drive
+#     stage: applied             # lead | applied | response | screen | loop | offer
+#     closed: false
+#     history:                   # ordered event log; a loop carries one event per round
+#       - { stage: applied, date: 2026-07-04 }
+#     referrer: Name             # required for referral channel once applied
+#     notes: []
+
+asks: []
+# Referral asks and outreach messages — inputs you count weekly, never applications:
+#   - date: 2026-07-04
+#     type: referral             # referral | outreach
+#     person: Name
+#     company: Company
+#     lead_id: company-role      # optional link to an entry
+#     outcome: no reply yet

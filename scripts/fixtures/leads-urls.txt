@@ -1,0 +1,9 @@
+# leads I found this week
+https://linkedin.com/jobs/view/123 | Notion | Frontend Engineer
+https://acme.co/careers/backend-engineer
+
+https://linkedin.com/jobs/view/456
+https://boards.example/acme/frontend-engineer
+just a note to myself, no link here
+https://x.co/a | Globex | SDE
+https://y.co/b | Globex | SDE

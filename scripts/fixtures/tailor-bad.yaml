@@ -1,0 +1,7 @@
+# Two violations: a pin referencing a nonexistent bullet id, and a forbidden
+# content key (overlays may never introduce bullets).
+version: 1
+segment: product
+pin: [does-not-exist]
+bullets:
+  - text: "A shiny per-JD bullet that isn't in the audited master."

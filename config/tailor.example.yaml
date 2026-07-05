@@ -1,0 +1,26 @@
+# Per-application overlay — the honest way to keep a different resume per job.
+#
+# Real overlays live in config/tailor/<entry-id>.yaml (gitignored), where
+# <entry-id> matches a row id in data/pipeline.yaml. Then:
+#
+#   node scripts/resume.mjs build --for <entry-id>
+#     → data/out/resume-<entry-id>.html   (add --pdf for a PDF)
+#
+# An overlay may ONLY select, reorder, and re-headline the ONE audited master
+# (config/resume.yaml). It cannot introduce a bullet — every id below must exist
+# in the master. That is what makes per-JD fabrication impossible: there is still
+# exactly one place any claim can live, and you have graded it.
+#
+# Every field is optional.
+version: 1
+
+role: fullstack                  # optional; a role preset from config/resume.yaml (headline + segments)
+segment: product                 # which segment(s) to build; a string or list. Overrides role's set.
+                                 #   e.g. segment: [product, backend]   (default: profile target_segment)
+headline: "Frontend-leaning Product Engineer"   # override the headline for this JD (beats the role's)
+summary: "…"                     # override the summary; or `false` to hide it entirely
+
+pin:     [public-api, de-users]  # master bullet ids to float to the top of their section
+drop:    [perf-replatform]       # master bullet ids to hide for this application
+include: [analytics-product]     # force-include a bullet even if its segments exclude it
+                                 #   (this is also how an `archive`-tagged master bullet is resurrected for one JD)

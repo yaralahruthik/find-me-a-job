@@ -1,0 +1,11 @@
+version: 1
+entries:
+  - id: acme-frontend
+    company: Acme
+    role: Frontend Engineer
+    link: https://acme.example/careers/fe
+    channel: linkedin-easy-apply
+    stage: applied
+    closed: false
+    history:
+      - { stage: applied, date: 2026-06-20 }

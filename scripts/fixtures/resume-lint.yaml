@@ -1,0 +1,14 @@
+version: 1
+name: Katherine Johnson
+headline: Product Engineer
+email: kj@example.com
+experience:
+  - company: Orbital Co.
+    role: Engineer
+    start: 2023-01
+    end: present
+    bullets:
+      - text: "Responsible for maintaining the reporting pipeline and various dashboards."
+        segments: []
+      - text: "Improved the checkout experience for users."
+        segments: []

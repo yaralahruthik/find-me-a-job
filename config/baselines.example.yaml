@@ -1,0 +1,28 @@
+# Baselines — realistic early-career conversion ranges for the Indian market.
+# `/fh init` copies this to config/baselines.yaml (gitignored). Edit it: a compass, not a scoreboard.
+# Your market, city, cycle, and target segment all move these numbers.
+
+# Application -> Response, per channel. [low, high] as fractions.
+app_to_response:
+  cold-portal: [0.01, 0.05]
+  referral:    [0.15, 0.40]
+  outreach:    [0.05, 0.15]
+  drive:       [0.01, 0.05]    # NOT in the course table — seeded equal to cold-portal. A guess. Edit for your reality.
+
+# Later arrows, all channels combined. [low, high].
+response_to_screen: [0.30, 0.50]
+screen_to_loop:     [0.40, 0.60]
+loop_to_offer:      [0.10, 0.25]
+
+# Don't diagnose a bottleneck until roughly this many results have flowed through an arrow.
+# Five applications with zero responses is consistent with a perfectly healthy funnel.
+min_sample: 20
+
+# Warn when more than this fraction of applications are cold-portal — the referral
+# channel converts ~10x better, so an all-cold mix is usually the real bottleneck.
+cold_share_warning: 0.80
+
+# `/fh review` velocity view (time-in-stage). These are descriptive, not conversion
+# verdicts, so they read at a smaller sample than the bottleneck gate above.
+velocity_min_sample: 3         # show a median time-in-stage once this many transitions are recorded
+stall_days: 21                 # flag an open row that hasn't moved in this many days

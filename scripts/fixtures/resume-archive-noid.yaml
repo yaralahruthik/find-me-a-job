@@ -1,0 +1,10 @@
+version: 1
+name: No Id
+headline: Product Engineer
+email: noid@example.com
+experience:
+  - company: Old Systems Inc.
+    role: Backend Engineer
+    bullets:
+      - text: "Migrated 12 mainframe batch jobs to a modern queue; cut run time 8h to 45min."
+        segments: [archive]

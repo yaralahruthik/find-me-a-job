@@ -1,0 +1,32 @@
+version: 1
+name: Grace Hopper
+headline: Senior Product Engineer
+location: Remote
+email: grace@example.com
+links:
+  - label: github.com/grace
+    url: https://github.com/grace
+experience:
+  - company: Compiler Co.
+    role: Founding Engineer
+    location: Remote
+    start: 2024-01
+    end: present
+    bullets:
+      - id: billing
+        text: "Shipped the billing product to 40 paying teams; cut close time 6h to 20min."
+        segments: []
+      - id: design-sys
+        text: "Rebuilt the design system used across 12 surfaces; Lighthouse 70 to 95."
+        segments: [design]
+projects:
+  - name: A-0
+    url: https://a0.example.com
+    role: Creator
+    bullets:
+      - id: a0-users
+        text: "Deployed at a real URL with 1,500 users."
+        segments: []
+skills:
+  - group: Languages
+    items: [TypeScript, Python]

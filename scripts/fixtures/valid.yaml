@@ -1,0 +1,43 @@
+version: 1
+entries:
+  - id: acme-frontend
+    company: Acme
+    role: Frontend Engineer
+    link: https://acme.example/careers/fe
+    channel: referral
+    stage: screen
+    closed: false
+    history:
+      - { stage: applied,  date: 2026-06-20 }
+      - { stage: response, date: 2026-06-24 }
+      - { stage: screen,   date: 2026-06-28 }
+    referrer: Sam
+  - id: beta-sde
+    company: Beta
+    role: SDE
+    link: https://beta.example/jobs/sde
+    channel: cold-portal
+    stage: lead
+    closed: false
+    history:
+      - { stage: lead, date: 2026-06-30 }
+  - id: gamma-sde
+    company: Gamma
+    role: SDE-1
+    link: https://gamma.example/jobs/sde-1
+    channel: referral
+    stage: loop
+    closed: false
+    history:
+      - { stage: applied,  date: 2026-06-01 }
+      - { stage: response, date: 2026-06-05 }
+      - { stage: screen,   date: 2026-06-10 }
+      - { stage: loop, date: 2026-06-16, round: machine-coding, note: "went ok" }
+      - { stage: loop, date: 2026-06-22, round: system-design }
+    referrer: Priya
+asks:
+  - date: 2026-06-25
+    type: referral
+    person: Sam
+    lead_id: acme-frontend
+    outcome: agreed

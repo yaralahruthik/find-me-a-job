@@ -1,0 +1,19 @@
+version: 1
+name: Cover Tester
+headline: Backend Engineer, system design focus
+email: cov@example.com
+experience:
+  - company: Reactor Co.
+    role: Engineer
+    start: 2023-01
+    end: present
+    bullets:
+      - id: reaction
+        text: "Measured user reaction across 3 pricing experiments."
+        segments: []
+      - id: node
+        text: "Ran the Node.js services with CI/CD for 12 teams."
+        segments: []
+skills:
+  - group: Stack
+    items: [GraphQL, Kubernetes]

@@ -1,0 +1,22 @@
+version: 1
+entries:
+  - id: acme-frontend
+    company: Acme
+    role: Frontend Engineer
+    link: https://boards.example/acme/frontend-engineer
+    channel: cold-portal
+    stage: lead
+    closed: false
+    history:
+      - { stage: lead, date: 2026-06-30 }
+  - id: notion-frontend-engineer
+    company: Notion
+    role: Frontend Engineer
+    link: https://notion.example/careers/frontend
+    channel: referral
+    stage: applied
+    closed: false
+    history:
+      - { stage: applied, date: 2026-06-30 }
+    referrer: Dana
+asks: []

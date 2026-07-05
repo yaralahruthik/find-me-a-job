@@ -1,0 +1,3 @@
+version: 1
+segment: product
+include: [legacy-cobol]

@@ -1,0 +1,39 @@
+# Example profile — `/fh init` builds config/profile.yaml (gitignored) for you.
+# This is what a filled-in one looks like.
+name: Priya Sharma
+
+# One sentence: "I'm a [identity] who [proof], looking for [role] at [segment]."
+positioning_statement: >-
+  I'm a frontend engineer moving into product engineering; I shipped an
+  expense-tracking app with 40 real users and wrote up every product decision,
+  and I'm looking for an SDE role at an early-stage product company.
+
+target_segment: product        # product | startup | service
+secondary_segment: startup     # optional
+search_mode: employed          # employed | full-time — seeds the default targets below
+review_day: sunday             # coaching only; metrics always use ISO weeks (Mon–Sun)
+
+# Weekly INPUT targets. The only grades that exist. Undershoot your enthusiasm.
+# Defaults: full-time -> 15 / 3 / 2 / 5   employed -> 7 / 2 / 2 / 3
+targets:
+  applications: 7
+  referral_asks: 2
+  outreach_messages: 2
+  prep_hours: 3
+
+# Originals live in config/assets/ (gitignored). This just records what was ingested.
+assets:
+  - file: resume.pdf
+    type: resume               # resume | linkedin
+    ingested: 2026-07-04
+
+# Evidence distilled from the resume at init, so later commands never re-parse the PDF.
+proof_points:
+  - "Shipped an expense tracker to 40 real users; React + Node.js stack."
+  - "Cut a reports page load from 6s to 1.8s (Lighthouse) by moving filtering server-side."
+  - "Automated my team's release checklist; saved ~2 hours per release."
+
+# Optional: proof that didn't earn resume space but belongs in an interview loop.
+# /fh proof parks cut-but-strong projects here; /fh loop raises them in prep.
+interview_assets:
+  - "Side project: expense tracker, live at a real URL, 40 real users; good system-design story."

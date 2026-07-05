@@ -1,0 +1,1 @@
+Cut reports page load 6s to 1.8s, measured with Lighthouse, by moving filtering server-side

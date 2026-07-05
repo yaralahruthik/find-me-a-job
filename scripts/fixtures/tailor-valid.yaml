@@ -1,0 +1,7 @@
+# Overlay for one application. Selects from the master; never adds content.
+version: 1
+segment: product
+headline: "Frontend-leaning Product Engineer"
+pin: [a0-users]        # float the A-0 project bullet to the top of its section
+drop: [billing]        # hide the billing bullet for this JD
+include: [design-sys]  # force-include the [design]-only bullet even though segment=product

@@ -1,0 +1,10 @@
+version: 1
+name: Bad Archive
+email: bad@example.com
+experience:
+  - company: Old Systems Inc.
+    role: Backend Engineer
+    bullets:
+      - id: mixed
+        text: "Migrated 12 services to Kubernetes; cut deploy time 30min to 4min."
+        segments: [archive, backend]

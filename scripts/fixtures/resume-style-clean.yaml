@@ -1,0 +1,26 @@
+# Fixture: clean control for the RESUME-RULES lint checks. No pronoun, buzzword,
+# references, order, gap, bullet-count, or contact flags should fire.
+name: Test Person
+headline: Software Engineer
+email: test.person@example.com
+phone: "+1 555 0100"
+experience:
+  - company: New Co
+    role: Senior Engineer
+    start: 2021-06
+    end: present
+    bullets:
+      - text: Raised checkout conversion 12% by removing 2 steps
+  - company: Old Co
+    role: Engineer
+    start: 2020-01
+    end: 2021-03
+    bullets:
+      - text: Cut build time 40% by caching 3 dependency layers
+education:
+  - school: Newer University
+    degree: M.S. Something
+    year: 2019
+  - school: Older University
+    degree: B.S. Something
+    year: 2015

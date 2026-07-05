@@ -1,0 +1,47 @@
+version: 1
+# History spanning ISO weeks 2026-W19 .. W23, so the cumulative funnel moves week to week.
+entries:
+  - id: off1
+    company: OfferCo
+    role: Frontend Engineer
+    link: https://x.example/off1
+    channel: referral
+    stage: offer
+    closed: false
+    history:
+      - { stage: applied,  date: 2026-05-04 }   # W19
+      - { stage: response, date: 2026-05-11 }   # W20
+      - { stage: screen,   date: 2026-05-18 }   # W21
+      - { stage: loop,     date: 2026-05-25 }   # W22
+      - { stage: offer,    date: 2026-06-01 }   # W23
+    referrer: Priya
+  - id: resp1
+    company: RespCo
+    role: FE
+    link: https://x.example/resp1
+    channel: cold-portal
+    stage: response
+    closed: false
+    history:
+      - { stage: applied,  date: 2026-05-05 }   # W19
+      - { stage: response, date: 2026-05-12 }   # W20
+  - id: rej1
+    company: RejCo
+    role: FE
+    link: https://x.example/rej1
+    channel: cold-portal
+    stage: applied
+    closed: true
+    closed_date: 2026-05-20
+    history:
+      - { stage: applied, date: 2026-05-06 }    # W19, closed W21 with no response
+  - id: app1
+    company: AppCo
+    role: FE
+    link: https://x.example/app1
+    channel: cold-portal
+    stage: applied
+    closed: false
+    history:
+      - { stage: applied, date: 2026-05-19 }    # W21
+asks: []

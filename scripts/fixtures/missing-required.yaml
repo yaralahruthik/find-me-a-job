@@ -1,0 +1,10 @@
+version: 1
+entries:
+  - id: acme-frontend
+    company: Acme
+    role: Frontend Engineer
+    channel: cold-portal
+    stage: applied
+    closed: false
+    history:
+      - { stage: applied, date: 2026-06-20 }

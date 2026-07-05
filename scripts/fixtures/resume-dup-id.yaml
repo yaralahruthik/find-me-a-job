@@ -1,0 +1,12 @@
+version: 1
+name: Dup Test
+headline: Engineer
+email: dup@example.com
+experience:
+  - company: A Co.
+    role: Engineer
+    bullets:
+      - id: shared
+        text: "Shipped thing one to 10 users."
+      - id: shared
+        text: "Shipped thing two to 20 users."

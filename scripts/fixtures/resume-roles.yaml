@@ -1,0 +1,22 @@
+version: 1
+name: Full Stack Person
+headline: Product Engineer
+email: fs@example.com
+roles:
+  product:   { headline: "Senior Product Engineer", segments: [product] }
+  fullstack: { headline: "Full-Stack Engineer",     segments: [product, backend] }
+experience:
+  - company: Stack Co.
+    role: Engineer
+    start: 2023-01
+    end: present
+    bullets:
+      - id: prod-bullet
+        text: "Shipped the checkout flow to 30k users."
+        segments: [product]
+      - id: backend-bullet
+        text: "Built the payments API handling 2M calls/day."
+        segments: [backend]
+      - id: always-bullet
+        text: "Owned delivery end to end for 5 launches."
+        segments: []

@@ -1,0 +1,86 @@
+version: 1
+name: Long Master
+headline: Product Engineer
+email: long@example.com
+experience:
+  - company: Everything Co.
+    role: Senior Engineer
+    location: Remote
+    start: 2018-01
+    end: present
+    bullets:
+      - id: b1
+        text: "Shipped feature number 1 to 11 paying teams and measured a 6 percent lift in weekly usage."
+        segments: []
+      - id: b2
+        text: "Shipped feature number 2 to 12 paying teams and measured a 7 percent lift in weekly usage."
+        segments: []
+      - id: b3
+        text: "Shipped feature number 3 to 13 paying teams and measured a 8 percent lift in weekly usage."
+        segments: []
+      - id: b4
+        text: "Shipped feature number 4 to 14 paying teams and measured a 9 percent lift in weekly usage."
+        segments: []
+      - id: b5
+        text: "Shipped feature number 5 to 15 paying teams and measured a 10 percent lift in weekly usage."
+        segments: []
+      - id: b6
+        text: "Shipped feature number 6 to 16 paying teams and measured a 11 percent lift in weekly usage."
+        segments: []
+      - id: b7
+        text: "Shipped feature number 7 to 17 paying teams and measured a 12 percent lift in weekly usage."
+        segments: []
+      - id: b8
+        text: "Shipped feature number 8 to 18 paying teams and measured a 13 percent lift in weekly usage."
+        segments: []
+      - id: b9
+        text: "Shipped feature number 9 to 19 paying teams and measured a 14 percent lift in weekly usage."
+        segments: []
+      - id: b10
+        text: "Shipped feature number 10 to 20 paying teams and measured a 15 percent lift in weekly usage."
+        segments: []
+      - id: b11
+        text: "Shipped feature number 11 to 21 paying teams and measured a 16 percent lift in weekly usage."
+        segments: []
+      - id: b12
+        text: "Shipped feature number 12 to 22 paying teams and measured a 17 percent lift in weekly usage."
+        segments: []
+      - id: b13
+        text: "Shipped feature number 13 to 23 paying teams and measured a 18 percent lift in weekly usage."
+        segments: []
+      - id: b14
+        text: "Shipped feature number 14 to 24 paying teams and measured a 19 percent lift in weekly usage."
+        segments: []
+      - id: b15
+        text: "Shipped feature number 15 to 25 paying teams and measured a 20 percent lift in weekly usage."
+        segments: []
+      - id: b16
+        text: "Shipped feature number 16 to 26 paying teams and measured a 21 percent lift in weekly usage."
+        segments: []
+      - id: b17
+        text: "Shipped feature number 17 to 27 paying teams and measured a 22 percent lift in weekly usage."
+        segments: []
+      - id: b18
+        text: "Shipped feature number 18 to 28 paying teams and measured a 23 percent lift in weekly usage."
+        segments: []
+      - id: b19
+        text: "Shipped feature number 19 to 29 paying teams and measured a 24 percent lift in weekly usage."
+        segments: []
+      - id: b20
+        text: "Shipped feature number 20 to 30 paying teams and measured a 25 percent lift in weekly usage."
+        segments: []
+      - id: b21
+        text: "Shipped feature number 21 to 31 paying teams and measured a 26 percent lift in weekly usage."
+        segments: []
+      - id: b22
+        text: "Shipped feature number 22 to 32 paying teams and measured a 27 percent lift in weekly usage."
+        segments: []
+      - id: b23
+        text: "Shipped feature number 23 to 33 paying teams and measured a 28 percent lift in weekly usage."
+        segments: []
+      - id: b24
+        text: "Shipped feature number 24 to 34 paying teams and measured a 29 percent lift in weekly usage."
+        segments: []
+      - id: b25
+        text: "Shipped feature number 25 to 35 paying teams and measured a 30 percent lift in weekly usage."
+        segments: []

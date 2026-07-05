@@ -1,0 +1,9 @@
+version: 1
+name: Bad Order
+email: bad@example.com
+section_order: [nope, experience, experience]
+experience:
+  - company: Compiler Co.
+    role: Engineer
+    bullets:
+      - text: "Shipped a thing to 10 users."

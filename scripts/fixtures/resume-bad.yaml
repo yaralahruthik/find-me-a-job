@@ -1,0 +1,8 @@
+version: 1
+# name is missing on purpose
+headline: Engineer
+experience:
+  - company: Nobody Inc.
+    # role is missing on purpose
+    bullets:
+      - notes: "this bullet has no text field"

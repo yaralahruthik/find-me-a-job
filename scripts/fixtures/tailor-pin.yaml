@@ -1,0 +1,3 @@
+version: 1
+segment: all
+pin: [design-sys]   # float the second bullet above the first within its section

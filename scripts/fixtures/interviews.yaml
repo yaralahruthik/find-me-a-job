@@ -1,0 +1,78 @@
+version: 1
+entries:
+  - id: early-lead
+    company: LeadCo
+    role: FE
+    link: https://x.example/lead
+    channel: cold-portal
+    stage: lead
+    closed: false
+  - id: just-applied
+    company: AppCo
+    role: FE
+    link: https://x.example/app
+    channel: cold-portal
+    stage: applied
+    closed: false
+    history:
+      - { stage: applied, date: 2026-06-01 }
+  - id: got-response
+    company: RespCo
+    role: FE
+    link: https://x.example/resp
+    channel: cold-portal
+    stage: response
+    closed: false
+    history:
+      - { stage: applied,  date: 2026-06-01 }
+      - { stage: response, date: 2026-06-05 }
+  - id: open-screen
+    company: ScreenCo
+    role: Frontend Engineer
+    link: https://x.example/screen
+    channel: cold-portal
+    stage: screen
+    closed: false
+    history:
+      - { stage: applied,  date: 2026-05-01 }
+      - { stage: response, date: 2026-05-05 }
+      - { stage: screen,   date: 2026-05-20 }
+  - id: open-loop
+    company: LoopCo
+    role: SDE-1
+    link: https://x.example/loop
+    channel: cold-portal
+    stage: loop
+    closed: false
+    history:
+      - { stage: applied,  date: 2026-04-01 }
+      - { stage: response, date: 2026-04-05 }
+      - { stage: screen,   date: 2026-04-12 }
+      - { stage: loop, date: 2026-04-25, round: machine-coding }
+      - { stage: loop, date: 2026-05-02, round: system-design }
+  - id: closed-loop
+    company: DeadCo
+    role: FE
+    link: https://x.example/dead
+    channel: cold-portal
+    stage: loop
+    closed: true
+    closed_date: 2026-06-01
+    history:
+      - { stage: applied,  date: 2026-03-01 }
+      - { stage: response, date: 2026-03-05 }
+      - { stage: screen,   date: 2026-03-12 }
+      - { stage: loop,     date: 2026-03-20 }
+  - id: got-offer
+    company: OfferCo
+    role: FE
+    link: https://x.example/offer
+    channel: cold-portal
+    stage: offer
+    closed: false
+    history:
+      - { stage: applied,  date: 2026-02-01 }
+      - { stage: response, date: 2026-02-05 }
+      - { stage: screen,   date: 2026-02-12 }
+      - { stage: loop,     date: 2026-02-20 }
+      - { stage: offer,    date: 2026-02-28 }

@@ -1,0 +1,16 @@
+version: 1
+entries:
+  - id: acme-frontend
+    company: Acme
+    role: Frontend Engineer
+    link: https://acme.example/careers/fe
+    channel: cold-portal
+    stage: lead
+    closed: false
+    history:
+      - { stage: lead, date: 2026-06-20 }
+asks:
+  - date: 2026-06-25
+    type: referral
+    person: Sam
+    lead_id: nonexistent-company

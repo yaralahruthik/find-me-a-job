@@ -1,0 +1,220 @@
+# Example pipeline — copy to data/pipeline.yaml and edit, or let `/fh init` build yours.
+# Dated around ISO week 2026-W27 (Mon 2026-06-29 .. Sun 2026-07-05) so the numbers are illustrative.
+# This is a deliberately imperfect, honest tracker: mostly cold-portal, mostly silent. That is normal.
+# Each entry's stage timeline is an ordered `history` event log; a loop carries one event per round.
+version: 1
+
+entries:
+  # --- referral channel: few, but they convert ---
+  - id: zeta-frontend
+    company: Zeta
+    role: Frontend Engineer
+    link: https://zeta.tech/careers/frontend-engineer
+    channel: referral
+    stage: screen
+    closed: false
+    history:
+      - { stage: lead,     date: 2026-06-18 }
+      - { stage: applied,  date: 2026-06-20 }
+      - { stage: response, date: 2026-06-27 }
+      - { stage: screen,   date: 2026-07-01 }
+    referrer: Ananya Rao (college senior)
+    notes:
+      - "2026-06-27: recruiter Priya replied, sent OA link"
+      - "2026-07-01: OA cleared, HM round being scheduled"
+
+  - id: razorpay-sde1
+    company: Razorpay
+    role: SDE-1 (Frontend)
+    link: https://razorpay.com/jobs/sde-1-frontend
+    channel: referral
+    stage: loop
+    closed: false
+    history:
+      - { stage: applied,  date: 2026-06-15 }
+      - { stage: response, date: 2026-06-22 }
+      - { stage: screen,   date: 2026-06-26 }
+      - { stage: loop, date: 2026-07-02, round: machine-coding, note: "felt ok; sys-design next week" }
+    referrer: Karthik (ex-colleague)
+    notes:
+      - "2026-07-02: machine-coding round done, felt ok; sys-design next week"
+
+  - id: groww-frontend
+    company: Groww
+    role: Frontend Engineer
+    link: https://groww.in/careers/frontend
+    channel: referral
+    stage: applied
+    closed: false
+    history:
+      - { stage: applied, date: 2026-07-03 }
+    referrer: Rahul M (alumni)
+    notes:
+      - "2026-07-03: Rahul submitted the referral form"
+
+  # --- outreach channel: low volume, high intent ---
+  - id: pluto-founding-eng
+    company: Pluto (seed startup)
+    role: Founding Frontend Engineer
+    link: https://www.linkedin.com/jobs/view/pluto-founding-frontend
+    channel: outreach
+    stage: response
+    closed: false
+    history:
+      - { stage: applied,  date: 2026-06-30 }
+      - { stage: response, date: 2026-07-02 }
+    notes:
+      - "2026-06-30: DM'd founder Neha with deployed project link + resume"
+      - "2026-07-02: she replied, wants a call"
+
+  # --- drive channel ---
+  - id: infosys-drive-se
+    company: Infosys
+    role: Systems Engineer
+    link: https://career.infosys.com/off-campus-drive-2026
+    channel: drive
+    stage: offer
+    closed: false
+    history:
+      - { stage: applied,  date: 2026-05-28 }
+      - { stage: response, date: 2026-06-05 }
+      - { stage: screen,   date: 2026-06-12 }
+      - { stage: loop,     date: 2026-06-20 }
+      - { stage: offer,    date: 2026-06-30 }
+    notes:
+      - "2026-06-30: written offer received. Safety net; still searching for product roles."
+
+  # --- cold-portal channel: the volume channel. mostly silence. that is the base rate working. ---
+  - id: swiggy-frontend
+    company: Swiggy
+    role: Frontend Engineer II
+    link: https://careers.swiggy.com/frontend-engineer-ii
+    channel: cold-portal
+    stage: response
+    closed: false
+    history:
+      - { stage: applied,  date: 2026-06-24 }
+      - { stage: response, date: 2026-07-01 }
+    notes:
+      - "2026-07-01: recruiter screen invite"
+
+  - id: cred-sde
+    company: CRED
+    role: SDE (Frontend)
+    link: https://careers.cred.club/sde-frontend
+    channel: cold-portal
+    stage: applied
+    closed: true
+    closed_date: 2026-07-02
+    history:
+      - { stage: applied, date: 2026-06-23 }
+    notes:
+      - "2026-07-02: rejection email. Clean close; stage stays applied."
+
+  - id: phonepe-ui
+    company: PhonePe
+    role: UI Engineer
+    link: https://www.phonepe.com/careers/ui-engineer
+    channel: cold-portal
+    stage: applied
+    closed: false
+    history:
+      - { stage: applied, date: 2026-06-29 }
+    notes: []
+
+  - id: meesho-frontend
+    company: Meesho
+    role: Frontend Developer
+    link: https://www.meesho.io/jobs/frontend-developer
+    channel: cold-portal
+    stage: applied
+    closed: false
+    history:
+      - { stage: applied, date: 2026-06-30 }
+
+  - id: postman-frontend
+    company: Postman
+    role: Frontend Engineer
+    link: https://www.postman.com/company/careers/frontend-engineer
+    channel: cold-portal
+    stage: applied
+    closed: false
+    history:
+      - { stage: applied, date: 2026-07-01 }
+
+  - id: freshworks-sde
+    company: Freshworks
+    role: SDE - UI
+    link: https://www.freshworks.com/careers/sde-ui
+    channel: cold-portal
+    stage: applied
+    closed: false
+    history:
+      - { stage: applied, date: 2026-07-02 }
+
+  - id: zomato-frontend
+    company: Zomato
+    role: Frontend Engineer
+    link: https://www.zomato.com/careers/frontend-engineer
+    channel: cold-portal
+    stage: applied
+    closed: true
+    closed_date: 2026-06-28
+    history:
+      - { stage: applied, date: 2026-06-10 }
+    notes:
+      - "2026-06-28: rejected. Never heard back before that."
+
+  - id: dunzo-ui
+    company: Dunzo
+    role: UI Developer
+    link: https://www.dunzo.com/careers/ui-developer
+    channel: cold-portal
+    stage: applied
+    closed: false
+    history:
+      - { stage: applied, date: 2026-06-12 }
+
+  # --- leads: identified, not yet applied. the raw material. ---
+  - id: atlassian-frontend
+    company: Atlassian (Bengaluru GCC)
+    role: Frontend Engineer
+    link: https://www.atlassian.com/company/careers/frontend-engineer-blr
+    channel: referral
+    stage: lead
+    closed: false
+    history:
+      - { stage: lead, date: 2026-07-03 }
+    notes:
+      - "2026-07-03: find an alumni referrer before applying"
+
+  - id: notion-frontend
+    company: Notion
+    role: Frontend Engineer
+    link: https://www.notion.so/careers/frontend-engineer
+    channel: cold-portal
+    stage: lead
+    closed: false
+    history:
+      - { stage: lead, date: 2026-07-04 }
+
+# Referral asks & outreach messages — INPUTS. Counted weekly, never applications.
+asks:
+  - date: 2026-06-29
+    type: referral
+    person: Sneha (batchmate at Groww)
+    company: Groww
+    lead_id: groww-frontend
+    outcome: agreed, submitted referral
+  - date: 2026-06-30
+    type: outreach
+    person: Neha (founder, Pluto)
+    company: Pluto
+    lead_id: pluto-founding-eng
+    outcome: warm reply, call scheduled
+  - date: 2026-07-02
+    type: referral
+    person: Vikram (senior at Atlassian)
+    company: Atlassian
+    lead_id: atlassian-frontend
+    outcome: no reply yet

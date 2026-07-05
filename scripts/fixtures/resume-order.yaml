@@ -1,0 +1,21 @@
+version: 1
+name: Fresh Grad
+headline: Junior Software Engineer
+email: fresh@example.com
+section_order: [education, experience]
+experience:
+  - company: Intern Co.
+    role: Engineering Intern
+    location: Remote
+    start: 2025-06
+    end: 2025-08
+    bullets:
+      - text: "Shipped an internal dashboard used by 3 teams daily."
+        segments: []
+skills:
+  - group: Languages
+    items: [TypeScript]
+education:
+  - school: Example University
+    degree: B.S. Computer Science
+    year: 2026

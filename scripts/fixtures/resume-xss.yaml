@@ -1,0 +1,23 @@
+version: 1
+name: Test Person
+headline: Engineer
+location: Remote
+email: test@example.com
+links:
+  - label: my site
+    url: "javascript:alert(1)"
+  - label: github.com/ok
+    url: https://github.com/ok
+experience:
+  - company: Co.
+    role: Engineer
+    location: Remote
+    start: 2024-01
+    end: present
+    bullets:
+      - id: b1
+        text: "Shipped a thing to 10 teams."
+        segments: []
+skills:
+  - group: Languages
+    items: [TypeScript]

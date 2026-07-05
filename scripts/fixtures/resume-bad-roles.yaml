@@ -1,0 +1,6 @@
+version: 1
+name: Bad Roles
+roles:
+  broken:
+    headline: "Fine"
+    segments: "should-be-a-list"

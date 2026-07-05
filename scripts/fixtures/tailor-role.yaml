@@ -1,0 +1,4 @@
+# Overlay that picks a role framing for one application, and overrides its headline.
+version: 1
+role: product
+headline: "Custom Per-JD Title"
