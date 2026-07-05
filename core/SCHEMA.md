@@ -88,7 +88,7 @@ name: ""
 positioning_statement: ""      # one sentence: "I'm a [identity] who [proof], looking for [role] at [segment]."
 target_segment: product        # product | startup | service
 secondary_segment: null        # optional, same enum
-experience_years: 2            # total professional experience, confirmed at init; used to mark stretch roles, never to gate
+experience_years: 2            # required at init: total professional experience, confirmed with the user; used to mark stretch roles, never to gate
 search_mode: employed          # employed | full-time  (seeds default targets)
 review_day: sunday             # coaching only; the script always uses ISO weeks (Mon–Sun)
 targets:                       # weekly INPUT targets — the only grades that exist
@@ -136,8 +136,8 @@ version: 1
 name: Ada Lovelace          # required, string
 headline: Senior Product Engineer   # your positioning, one line (lint warns if absent)
 location: Remote            # optional
-email: ada@example.com      # optional but strongly advised (lint warns if absent)
-phone: null                 # optional
+email: ada@example.com      # required at init (structurally optional; lint warns if absent)
+phone: "+91 90000 00000"    # required at init (structurally optional; lint flags if absent)
 links:                      # optional list; each needs a url (label optional)
   - { label: github.com/ada, url: https://github.com/ada }
 summary: "…"                # optional; renders only if present — most resumes should omit it and spend the space on bullets

@@ -26,12 +26,15 @@ Ask for their **resume and/or a LinkedIn profile export** — both is better con
 
 If a resume is a PDF you can't read directly, ask the user to paste its text, or convert it — do not guess its contents.
 
-**Collect contact & links now — gather as much as they'll give.** These seed the resume header (`config/resume.yaml`) later, and a resume without them is incomplete, so pull them in during intake rather than discovering the gaps at build time. Nudge explicitly for each; take what exists, leave the rest honestly empty (never invent a URL or a location):
+**Collect contact & links now — gather as much as they'll give.** These seed the resume header (`config/resume.yaml`) later, and a resume without them is incomplete, so pull them in during intake rather than discovering the gaps at build time.
+
+**Email and phone are required: ask until you have both, and do not finish intake without them.** A resume header must carry a callable contact route; missing contact info is a top resume mistake (`core/RESUME-RULES.md` §6.5), and `lint` flags both when absent.
+
+The rest are nudged, never forced. Ask explicitly for each; take what exists, leave the rest honestly empty (never invent a URL or a location):
 
 - **GitHub** (or GitLab) profile URL — the single most-expected link for an engineer.
 - **Personal website / portfolio** URL.
 - **Location** (city, country — or "Remote") and whether they're open to relocation/remote.
-- **Email** and, if they want it on the resume, **phone**.
 - Anything else that strengthens context: other profiles (X, personal blog, Dribbble), notable public writeups, open-source repos, a demo link for a flagship project, work authorization/visa constraints if relevant to their targets.
 
 Pull these (plus name and any headline from the LinkedIn export) into `proof_points`/notes so step 3 can drop them straight into the resume header. If a link 404s or looks stale, flag it rather than shipping it.
@@ -44,7 +47,7 @@ Read the rules in `core/RULES.md`, then draft a **positioning statement** *again
 
 - Pick a **primary target segment** (`product` | `startup` | `service`) with the user; ask why that one and not the others. Optionally a secondary for volume.
 - The `[proof]` slot must be filled from their real `proof_points`. If it's embarrassingly empty, say so plainly — that's the real bottleneck, and step 3 will confirm it. Do not invent proof.
-- **Capture `experience_years`**: derive total professional experience in years from the resume's experience dates read at intake, then confirm the number with the user (internships and career gaps make any derivation a guess, so confirm, never assume). A student or new grad records `0`; honest, not padded. Later commands use it to mark stretch roles (`/fh leads`), never to gate an application.
+- **`experience_years` is required — do not complete this step without a confirmed number.** Derive total professional experience in years from the resume's experience dates read at intake, then confirm it with the user (internships and career gaps make any derivation a guess, so confirm, never assume). A student or new grad records `0`; honest, not padded. Later commands use it to mark stretch roles (`/fh leads`), never to gate an application.
 - Write `positioning_statement`, `target_segment`, `secondary_segment`, `experience_years` to `config/profile.yaml`.
 
 ## 3. Proof audit + fixes

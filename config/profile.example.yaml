@@ -10,7 +10,7 @@ positioning_statement: >-
 
 target_segment: product        # product | startup | service
 secondary_segment: startup     # optional
-experience_years: 2            # total professional experience, confirmed at init; used to mark stretch roles, never to gate
+experience_years: 2            # required at init: total professional experience, confirmed with the user; used to mark stretch roles, never to gate
 search_mode: employed          # employed | full-time — seeds the default targets below
 review_day: sunday             # coaching only; metrics always use ISO weeks (Mon–Sun)
 
