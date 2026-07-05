@@ -1,0 +1,37 @@
+# Milestone releases, tag-driven. The maintainer ritual:
+#
+#   1. In the milestone PR, bump "version" in package.json.
+#      major = the data schema changed (core/SCHEMA.md or the resume schema):
+#              the release notes MUST name the migrate path
+#              (e.g. `node scripts/pipeline.mjs migrate`).
+#      minor = new capability (a subcommand, a script, a check).
+#      patch = fixes and docs.
+#   2. After the PR merges: git tag vX.Y.Z && git push origin vX.Y.Z
+#   3. This workflow re-runs the tests and publishes the GitHub Release with
+#      notes generated from the merged PRs since the previous tag.
+#
+# Releases are cut on milestones, never on a schedule.
+
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}

@@ -142,6 +142,10 @@ The best time to get the numbers off a feature you built is the day it ships, wh
 
 The drafted bullet gets the same deterministic check that judges every bullet already in your resume. A metric flag means keep digging for the real number: **never invent one**. If nothing honest survives the questioning, one true sentence is the bullet; a numberless truth beats a percentage you can't back up.
 
+## Staying up to date
+
+Update any time with `git pull`; your data never moves, it lives in gitignored files the repo never touches. Watch the repo's GitHub Releases to hear when milestones land. Versioning is honest about your data: a **major** release means the tracker or resume schema changed and the release notes include the exact migration command (the tool ships one, like `node scripts/pipeline.mjs migrate`); a minor release adds capability; a patch fixes things.
+
 ## Under the hood
 
 The product is markdown plus small deterministic scripts. `core/` holds the playbooks the agent follows: [`RULES.md`](core/RULES.md) (the binding law), [`SCHEMA.md`](core/SCHEMA.md) (the data contract), and [`ROUTER.md`](core/ROUTER.md) (the command table, plus the full script reference). `scripts/` holds the Node engines that compute every number, so the agent never does arithmetic. Your entire funnel is one YAML file (`data/pipeline.yaml`); all personal data is gitignored, with committed `.example` files showing the shape. `npm test` covers the scripts.
