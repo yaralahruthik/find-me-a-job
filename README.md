@@ -1,5 +1,7 @@
 # find-me-a-job
 
+[![tests](https://github.com/yaralahruthik/find-me-a-job/actions/workflows/test.yml/badge.svg)](https://github.com/yaralahruthik/find-me-a-job/actions/workflows/test.yml)
+
 Run your job search by talking to your AI CLI: Claude Code, Codex, Gemini CLI, Cursor, or any agent that reads `AGENTS.md`. You say what happened ("applied to Acme yesterday", "Swiggy rejected me"); it keeps a strict tracker, computes your weekly numbers, tailors your resume honestly, and runs a review ritual with you. **The philosophy is law**: the tool never lets dishonest data in, never grades you on outcomes you can't control, and never blocks you from applying.
 
 > The whole thing in one sentence: **you cannot control offers, so run everything you can control as a system and let the numbers do the judging.**
