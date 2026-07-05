@@ -88,6 +88,7 @@ name: ""
 positioning_statement: ""      # one sentence: "I'm a [identity] who [proof], looking for [role] at [segment]."
 target_segment: product        # product | startup | service
 secondary_segment: null        # optional, same enum
+experience_years: 2            # total professional experience, confirmed at init; used to mark stretch roles, never to gate
 search_mode: employed          # employed | full-time  (seeds default targets)
 review_day: sunday             # coaching only; the script always uses ISO weeks (Mon–Sun)
 targets:                       # weekly INPUT targets — the only grades that exist

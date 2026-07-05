@@ -44,7 +44,8 @@ Read the rules in `core/RULES.md`, then draft a **positioning statement** *again
 
 - Pick a **primary target segment** (`product` | `startup` | `service`) with the user; ask why that one and not the others. Optionally a secondary for volume.
 - The `[proof]` slot must be filled from their real `proof_points`. If it's embarrassingly empty, say so plainly — that's the real bottleneck, and step 3 will confirm it. Do not invent proof.
-- Write `positioning_statement`, `target_segment`, `secondary_segment` to `config/profile.yaml`.
+- **Capture `experience_years`**: derive total professional experience in years from the resume's experience dates read at intake, then confirm the number with the user (internships and career gaps make any derivation a guess, so confirm, never assume). A student or new grad records `0`; honest, not padded. Later commands use it to mark stretch roles (`/fh leads`), never to gate an application.
+- Write `positioning_statement`, `target_segment`, `secondary_segment`, `experience_years` to `config/profile.yaml`.
 
 ## 3. Proof audit + fixes
 
