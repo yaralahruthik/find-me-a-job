@@ -40,10 +40,12 @@ test('setup --check: exit code mirrors ready, and deps are true in this checkout
   assert.equal(r.code, 0, 'ready → exit 0');
 });
 
-test('setup --check (human): prints one line per probe and the /fh init pointer', () => {
+test('setup --check (human): prints one line per probe; config is set up or points at /fh init', () => {
   const r = run(['--check']);
   for (const label of ['node', 'deps', 'guard', 'pdf', 'config']) assert.match(r.stdout, new RegExp(`^  ${label}`, 'm'));
-  assert.match(r.stdout, /\/fh init/);
+  // The /fh init pointer only prints on an uninitialized checkout; a maintainer's
+  // machine has the gitignored config, so accept either known form of the line.
+  assert.match(r.stdout, /^  config    (set up|not yet — run \/fh init in your AI CLI)$/m);
 });
 
 test('setup: an unknown subcommand is a usage error (exit 2), never a silent act', () => {
