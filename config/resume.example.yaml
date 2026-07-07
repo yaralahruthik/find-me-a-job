@@ -39,6 +39,12 @@ links:
 # A fresh grad usually puts education first:
 # section_order: [education, experience, projects, skills]
 
+# Optional. How experience dates render: "month" (default, "Jun 2025 - Present")
+# or "year" ("2025 - Present"). Years-only softens a visible employment gap while
+# the years stay true — framing, not fabrication. /fh init offers it if it spots a
+# gap; an overlay can override it per application. (Education always shows the year.)
+# date_granularity: year
+
 # Optional role presets. The same person is often framed different ways depending on
 # the JD — "Product Engineer" here, "Full-Stack Engineer" there. A preset bundles a
 # headline + a set of segments to include, so you name each framing once:

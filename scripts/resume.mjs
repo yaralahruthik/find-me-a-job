@@ -20,6 +20,7 @@ const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const MONTH_RE = /^\d{4}-\d{2}$/;        // YYYY-MM (resume dates are month-granular)
 const DASH_RE = /[—–]/;                  // em dash / en dash — flagged by lint, normalized at render
 const PAGE_FORMATS = { letter: 'Letter', a4: 'A4' };
+const DATE_GRANULARITIES = ['year', 'month'];   // how experience dates render (see fmtRange); default 'month'
 
 // Renderable sections, in default order. `section_order:` in resume.yaml may
 // reorder them (e.g. a fresh grad putting education first); sections it omits
@@ -230,6 +231,9 @@ function validateResume(doc) {
     }
   }
 
+  if (doc.date_granularity !== undefined && !DATE_GRANULARITIES.includes(doc.date_granularity))
+    errors.push(`"date_granularity" must be one of: ${DATE_GRANULARITIES.join(', ')}`);
+
   return errors;
 }
 
@@ -238,7 +242,7 @@ function validateResume(doc) {
 // An overlay tailors the master for one application. It may ONLY select, reorder,
 // and re-headline — never introduce content. Every bullet it names must already
 // exist in the master, which makes per-JD fabrication structurally impossible.
-const OVERLAY_KEYS = new Set(['version', 'entry', 'role', 'segment', 'headline', 'summary', 'pin', 'drop', 'include']);
+const OVERLAY_KEYS = new Set(['version', 'entry', 'role', 'segment', 'headline', 'summary', 'date_granularity', 'pin', 'drop', 'include']);
 
 function validateOverlay(ov, masterIds) {
   const errors = [];
@@ -254,6 +258,7 @@ function validateOverlay(ov, masterIds) {
     errors.push('overlay "segment" must be a non-empty string or list of strings');
   if (ov.headline !== undefined && !isNonEmptyString(ov.headline)) errors.push('overlay "headline" must be a non-empty string');
   if (ov.summary !== undefined && ov.summary !== false && !isNonEmptyString(ov.summary)) errors.push('overlay "summary" must be a string, or false to hide it');
+  if (ov.date_granularity !== undefined && !DATE_GRANULARITIES.includes(ov.date_granularity)) errors.push(`overlay "date_granularity" must be one of: ${DATE_GRANULARITIES.join(', ')}`);
   for (const key of ['pin', 'drop', 'include']) {
     if (ov[key] === undefined) continue;
     if (!Array.isArray(ov[key])) { errors.push(`overlay "${key}" must be a list of bullet ids`); continue; }
@@ -342,6 +347,7 @@ function selectForSegment(doc, segSet, overlay = {}) {
     projects: (doc.projects || []).map((p) => ({ ...p, bullets: pick(p.bullets) })),
   };
   if (overlay.summary !== undefined) out.summary = overlay.summary === false ? undefined : overlay.summary;
+  if (overlay.date_granularity !== undefined) out.date_granularity = overlay.date_granularity;
   return out;
 }
 
@@ -558,12 +564,24 @@ function normalizeText(s) {
 // Escaped, dash-normalized text for display. Use esc() for attributes/URLs.
 function txt(s) { return esc(normalizeText(s)); }
 
-function fmtRange(start, end) {
-  const f = (m) => (m === 'present' ? 'Present' : (typeof m === 'string' && MONTH_RE.test(m)
-    ? new Date(m + '-01T00:00:00Z').toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })
-    : m));
+function fmtRange(start, end, granularity = 'month') {
+  // Dates are stored YYYY-MM for accurate ordering and gap math; how they RENDER is
+  // controlled by `date_granularity` (config/resume.yaml, overridable per-application
+  // in an overlay). 'month' -> "Jun 2025" (default, ATS-conventional); 'year' -> "2025",
+  // which softens a visible employment gap while the years stay true (framing, not
+  // fabrication). Same-year ranges collapse to a single value.
+  const f = (m) => {
+    if (m === 'present') return 'Present';
+    if (typeof m !== 'string' || !MONTH_RE.test(m)) return m;
+    return granularity === 'year'
+      ? m.slice(0, 4)
+      : new Date(m + '-01T00:00:00Z').toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+  };
   if (!start && !end) return '';
-  return [start ? f(start) : '', end ? f(end) : ''].filter(Boolean).join(' - ');
+  const s = start ? f(start) : '';
+  const e = end ? f(end) : '';
+  if (s && e && s === e) return s;
+  return [s, e].filter(Boolean).join(' - ');
 }
 
 function contactLine(doc) {
@@ -575,7 +593,7 @@ function contactLine(doc) {
   return parts.join(' | ');
 }
 
-function renderSectionItems(items, kind) {
+function renderSectionItems(items, kind, granularity) {
   const out = [];
   for (const item of items) {
     const bullets = item.bullets || [];
@@ -586,7 +604,7 @@ function renderSectionItems(items, kind) {
       out.push(`  <div class="item-row"><span class="item-title">${title}</span><span class="item-sub">${item.role ? txt(item.role) : ''}</span></div>`);
     } else {
       // jakegut layout: bold role + dates right, then italic company + location right.
-      out.push(`  <div class="item-row"><span class="item-title">${txt(item.role)}</span><span class="item-date">${fmtRange(item.start, item.end)}</span></div>`);
+      out.push(`  <div class="item-row"><span class="item-title">${txt(item.role)}</span><span class="item-date">${fmtRange(item.start, item.end, granularity)}</span></div>`);
       out.push(`  <div class="item-row item-sub"><span>${txt(item.company)}</span><span>${item.location ? txt(item.location) : ''}</span></div>`);
     }
     if (bullets.length) {
@@ -601,15 +619,16 @@ function renderSectionItems(items, kind) {
 
 function renderHtml(doc, segment, pageKey) {
   const format = PAGE_FORMATS[pageKey] || 'Letter';
+  const gran = doc.date_granularity || 'month';   // overlay > master > default (see fmtRange)
 
   // One builder per section; each returns '' when it has nothing to render.
   const builders = {
     summary: () => (isNonEmptyString(doc.summary)
       ? `<section><h2>Summary</h2><p class="summary">${txt(doc.summary)}</p></section>` : ''),
     experience: () => ((doc.experience || []).some((e) => (e.bullets || []).length)
-      ? `<section><h2>Experience</h2>\n${renderSectionItems(doc.experience || [], 'experience')}</section>` : ''),
+      ? `<section><h2>Experience</h2>\n${renderSectionItems(doc.experience || [], 'experience', gran)}</section>` : ''),
     projects: () => {
-      const rendered = renderSectionItems((doc.projects || []).filter((p) => (p.bullets || []).length), 'project');
+      const rendered = renderSectionItems((doc.projects || []).filter((p) => (p.bullets || []).length), 'project', gran);
       return rendered ? `<section><h2>Projects</h2>\n${rendered}</section>` : '';
     },
     skills: () => {

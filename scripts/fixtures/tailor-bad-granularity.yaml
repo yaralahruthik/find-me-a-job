@@ -1,0 +1,4 @@
+# Overlay with an invalid date_granularity — build must refuse (exit 1).
+version: 1
+segment: product
+date_granularity: decade

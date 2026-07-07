@@ -56,9 +56,10 @@ Run the `core/commands/proof.md` playbook now, inline. It grades the resume and 
 
 **Decide whether a Projects section belongs.** The course teaches projects as the main event, but that is aimed at candidates with little or no work history. Be agnostic: include a Projects section **only** if the user's professional experience is thin/absent, **or** they have a genuinely extraordinary project worth its own space. If solid experience already carries the proof, omit projects entirely and fold any standout project into Experience or `interview_assets` (or keep it in the master tagged `archive`) — a Projects section under a strong work history just costs one-page real estate. Ask the user; decide together.
 
-**Authoring style:** write bullets and the headline with plain punctuation — **no em dashes** (use commas, colons, or hyphens). The renderer normalizes them anyway, but clean source reads better and keeps `lint` quiet. The full writing standard is `core/RESUME-RULES.md`; two decisions to make here, with the user:
+**Authoring style:** write bullets and the headline with plain punctuation — **no em dashes** (use commas, colons, or hyphens). The renderer normalizes them anyway, but clean source reads better and keeps `lint` quiet. The full writing standard is `core/RESUME-RULES.md`; three decisions to make here, with the user:
 - **Section order:** education below experience once they have real work history; a student/new grad inverts it (`section_order: [education, …]` in `config/resume.yaml`).
 - **Summary:** none by default — the one exception is a career changer, where two orienting lines earn their space.
+- **Date granularity:** default is month ("Jun 2025 - Present"). Run `node scripts/resume.mjs lint --segment all --json` and look for `severity: "gap"` flags (each already names the month count and the two companies). If the history carries a gap over ~6 months, surface it plainly and **offer** years-only dates (`date_granularity: year` in `config/resume.yaml`): it renders "2025 - Present", softening the visual gap while the years stay true. That is framing, not fabrication, and a gap is a conversation, never a wall (`core/RESUME-RULES.md` §7) — never pitch it as hiding anything. Show the diff, write on yes, re-validate. No gap? Leave the month default and just mention the field exists.
 
 ## 4. Tracker + 30-day backfill
 
