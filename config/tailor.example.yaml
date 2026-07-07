@@ -19,6 +19,8 @@ segment: product                 # which segment(s) to build; a string or list. 
                                  #   e.g. segment: [product, backend]   (default: profile target_segment)
 headline: "Frontend-leaning Product Engineer"   # override the headline for this JD (beats the role's)
 summary: "…"                     # override the summary; or `false` to hide it entirely
+date_granularity: year           # override the master's date style for THIS application: year | month
+                                 #   (lets you A/B test a date format per job without touching the master)
 
 pin:     [public-api, de-users]  # master bullet ids to float to the top of their section
 drop:    [perf-replatform]       # master bullet ids to hide for this application

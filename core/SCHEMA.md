@@ -142,6 +142,7 @@ links:                      # optional list; each needs a url (label optional)
   - { label: github.com/ada, url: https://github.com/ada }
 summary: "…"                # optional; renders only if present — most resumes should omit it and spend the space on bullets
 section_order: [experience, projects, skills, education]   # optional; e.g. a fresh grad puts education first. Omitted sections keep default order after the listed ones.
+date_granularity: month     # optional; month (default, "Jun 2025 - Present") or year ("2025 - Present"). Years-only softens a visible gap, the years stay true. Overridable per-application in an overlay.
 experience:                 # optional list
   - company: Analytical Engines Inc.   # required per item
     role: Founding Engineer            # required per item
@@ -180,7 +181,7 @@ Precedence (highest first): explicit `--segment`/`--role` → the overlay's `seg
 
 **The `archive` tag** keeps a bullet in the master without shipping it: old jobs, superseded work, deep-cut detail. An archived bullet is excluded from every concrete framing by construction, appears under `--segment all` (the master/audit view — not a shippable resume), and a per-application overlay can resurrect it by id with `include:`. `archive` is exclusive — it cannot be combined with other tags (validation error). "Cutting for space" always means re-tagging to `archive` or a narrower segment, never deleting: the record is how the system knows everything you've done. (`--segment archive` renders always-on + archived bullets; harmless, mainly for auditing.)
 
-**Rendering is opinionated:** a classic-serif, jakegut-style template (Charter/Times, ATS-safe) — small-caps centered name, small-caps section headings over a full-width rule, bold role with right-aligned dates and an italic company/location row, tight one-page spacing. Em/en dashes are normalized in all display text (em → comma, en → hyphen). `summary` renders only when present (omit it by default); the `projects` section renders only when present — include it only when experience is thin or a project is extraordinary. Default section order is experience → projects → skills → education; `section_order:` may reorder.
+**Rendering is opinionated:** a classic-serif, jakegut-style template (Charter/Times, ATS-safe) — small-caps centered name, small-caps section headings over a full-width rule, bold role with right-aligned dates and an italic company/location row, tight one-page spacing. Em/en dashes are normalized in all display text (em → comma, en → hyphen). Dates render at `date_granularity` (default `month`, "Jun 2025 - Present"; `year` renders "2025 - Present" and collapses a same-year range to one year) — a render-time choice only; the stored `YYYY-MM` and all gap/order math are untouched. `summary` renders only when present (omit it by default); the `projects` section renders only when present — include it only when experience is thin or a project is extraordinary. Default section order is experience → projects → skills → education; `section_order:` may reorder.
 
 ### Validation rules (each violation = one error line, exit 1)
 
@@ -193,6 +194,7 @@ Precedence (highest first): explicit `--segment`/`--role` → the overlay's `seg
 7. `roles` (if present) is a mapping of name → `{ headline?, segments }`; each preset's `segments` is a non-empty list of strings.
 8. `section_order` (if present) is a list drawn from `summary, experience, projects, skills, education`, no duplicates.
 9. A bullet tagged `archive` carries no other segment tags (the archive contract is "in no build" — mixed tags would silently resurface it).
+10. `date_granularity` (if present) is one of `year`, `month`.
 
 `lint` is separate and **never fails a build**: it flags duty-verb openers, number-less bullets, over-long bullets, an over-one-page estimate, a missing headline/email, and the `core/RESUME-RULES.md` writing-standard checks — `pronoun` (first-person pronouns), `buzzword` (self-description fluff), `references` ("references on request"), `order` (reverse-chronology broken, exact via the structured dates), `gap` (over 6 months between roles, info-level), `bullets` (over 7 in one role, concrete framings only), and `contact` (missing phone, non-name-based email). These inform; they never gate. The over-one-page flag applies to **concrete framings** only — under `--segment all` (the master view) it becomes an `info`, because the master career record is allowed to run long; `all` also warns about archived bullets with no `id` (an overlay can't resurrect them).
 
@@ -214,6 +216,7 @@ role: fullstack             # optional; a preset from config/resume.yaml roles:
 segment: product            # optional; a string or list; overrides the role's set
 headline: "…"               # optional; override the headline for this JD (beats the role's)
 summary: "…"                # optional; override the summary, or `false` to hide it
+date_granularity: year      # optional; override the master's date style for this application (year | month) — handy for A/B testing a date format per job
 pin:     [mcp-server, soc2] # optional; master bullet ids floated to the top of their section
 drop:    [withyhr-leads]    # optional; master bullet ids hidden for this application
 include: [some-bullet-id]   # optional; force-include a bullet its segment would exclude
@@ -221,8 +224,8 @@ include: [some-bullet-id]   # optional; force-include a bullet its segment would
 
 ### Overlay validation (exit 1 on any violation)
 
-1. The overlay is a mapping. Only these keys are allowed: `version`, `entry`, `role`, `segment`, `headline`, `summary`, `pin`, `drop`, `include`. A content key (`bullets`, `text`, `experience`, `projects`, `skills`) is rejected with a pointer to add the bullet to the master instead.
-2. `role`/`headline` are non-empty strings; `segment` is a non-empty string or list of strings; `summary` is a string or `false`. (An unknown `role` name surfaces at build time, exit 2.)
+1. The overlay is a mapping. Only these keys are allowed: `version`, `entry`, `role`, `segment`, `headline`, `summary`, `date_granularity`, `pin`, `drop`, `include`. A content key (`bullets`, `text`, `experience`, `projects`, `skills`) is rejected with a pointer to add the bullet to the master instead.
+2. `role`/`headline` are non-empty strings; `segment` is a non-empty string or list of strings; `summary` is a string or `false`; `date_granularity` (if present) is `year` or `month`. (An unknown `role` name surfaces at build time, exit 2.)
 3. `pin`/`drop`/`include` are lists of strings, and **every id must exist in the master's bullet ids**. A dangling reference is an error.
 
 A missing overlay file for `--for <id>` is **not** an error — the build proceeds by segment alone and prints a soft note. If `<entry-id>` isn't a row in `data/pipeline.yaml`, the build still runs and nudges you to log the application.

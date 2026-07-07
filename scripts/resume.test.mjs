@@ -266,6 +266,49 @@ test('validate: section_order rejects unknown and duplicate sections', () => {
   assert.match(r.stderr, /duplicate section "experience"/);
 });
 
+// ---------- date granularity (config field + overlay override) ----------
+
+test('render: default date granularity is month ("Jun 2025 - Present" style)', () => {
+  const out = freshOut();
+  const r = run(['build', '--file', VALID, '--segment', 'all', '--out', out, '--json']);
+  assert.equal(r.code, 0, r.stderr);
+  const html = readFileSync(JSON.parse(r.stdout).html, 'utf8');
+  assert.match(html, /<span class="item-date">Jan 2024 - Present<\/span>/, 'month is the default');
+});
+
+test('render: date_granularity: year renders years only and collapses a same-year range', () => {
+  const out = freshOut();
+  const r = run(['build', '--file', join(FIX, 'resume-year.yaml'), '--segment', 'all', '--out', out, '--json']);
+  assert.equal(r.code, 0, r.stderr);
+  const html = readFileSync(JSON.parse(r.stdout).html, 'utf8');
+  assert.doesNotMatch(html, /[A-Z][a-z]{2} \d{4}/, 'no month-name date should survive in year mode');
+  assert.match(html, /<span class="item-date">2024 - Present<\/span>/, 'open range shows years');
+  assert.match(html, /<span class="item-date">2021<\/span>/, 'a same-year role collapses to one year');
+});
+
+test('validate: date_granularity rejects an unknown value (exit 1)', () => {
+  const r = run(['validate', '--file', join(FIX, 'resume-bad-granularity.yaml')]);
+  assert.equal(r.code, 1);
+  assert.match(r.stderr, /date_granularity/);
+});
+
+test('build --for: an overlay date_granularity overrides the master default (A/B)', () => {
+  const out = freshOut();
+  // VALID has no date_granularity (defaults to month); the overlay forces year.
+  const r = run(['build', '--file', VALID, '--for', 'x', '--tailor-file', join(FIX, 'tailor-year.yaml'), '--out', out, '--json']);
+  assert.equal(r.code, 0, r.stderr);
+  const html = readFileSync(JSON.parse(r.stdout).html, 'utf8');
+  assert.match(html, /<span class="item-date">2024 - Present<\/span>/, 'overlay year beats the month default');
+  assert.doesNotMatch(html, /Jan 2024/, 'the master default month should not leak through');
+});
+
+test('build --for: an overlay with a bad date_granularity is refused (exit 1)', () => {
+  const out = freshOut();
+  const r = run(['build', '--file', VALID, '--for', 'x', '--tailor-file', join(FIX, 'tailor-bad-granularity.yaml'), '--out', out]);
+  assert.equal(r.code, 1);
+  assert.match(r.stderr, /date_granularity/);
+});
+
 test('render: em dashes become commas and en-dash ranges become hyphens; none ship', () => {
   const out = freshOut();
   const r = run(['build', '--file', DASH, '--segment', 'all', '--out', out, '--json']);

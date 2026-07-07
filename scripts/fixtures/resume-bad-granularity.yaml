@@ -1,0 +1,14 @@
+version: 1
+name: Grace Hopper
+headline: Senior Product Engineer
+email: grace@example.com
+date_granularity: decade
+experience:
+  - company: Compiler Co.
+    role: Founding Engineer
+    start: 2024-01
+    end: present
+    bullets:
+      - id: billing
+        text: "Shipped the billing product to 40 paying teams; cut close time 6h to 20min."
+        segments: []

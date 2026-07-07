@@ -1,0 +1,4 @@
+# Overlay that overrides only the date style for one application (A/B a date format).
+version: 1
+segment: product
+date_granularity: year
