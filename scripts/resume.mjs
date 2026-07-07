@@ -584,13 +584,20 @@ function fmtRange(start, end, granularity = 'month') {
   return [s, e].filter(Boolean).join(' - ');
 }
 
-function contactLine(doc) {
-  const parts = [];
-  if (doc.email) parts.push(esc(doc.email));
-  if (doc.phone) parts.push(esc(doc.phone));
-  if (doc.location) parts.push(txt(doc.location));
-  for (const l of doc.links || []) parts.push(`<a href="${safeHref(l.url)}">${txt(l.label || l.url)}</a>`);
-  return parts.join(' | ');
+function contactRows(doc) {
+  // Two deterministic rows: contact details on top, profile links below. A separator
+  // only ever sits BETWEEN items within a row, so none dangles at a wrapped row edge.
+  // Each item is an atomic nowrap span, so a multi-word value ("Hyderabad, India") or a
+  // phone number never splits. An absent group renders no row.
+  const details = [];
+  if (doc.email) details.push(esc(doc.email));
+  if (doc.phone) details.push(esc(doc.phone));
+  if (doc.location) details.push(txt(doc.location));
+  const links = (doc.links || []).map((l) => `<a href="${safeHref(l.url)}">${txt(l.label || l.url)}</a>`);
+  const row = (items) => (items.length
+    ? `<div class="contact-row">${items.map((p) => `<span class="ci">${p}</span>`).join(' | ')}</div>`
+    : '');
+  return [row(details), row(links)].filter(Boolean).join('\n');
 }
 
 function renderSectionItems(items, kind, granularity) {
@@ -670,7 +677,12 @@ function renderHtml(doc, segment, pageKey) {
   header { text-align: center; margin-bottom: 8px; }
   h1 { font-size: 24pt; font-variant: small-caps; margin: 0; letter-spacing: .5px; font-weight: bold; }
   .headline { font-size: 10.5pt; font-weight: normal; margin: 1px 0 3px; }
+  /* contact renders as two centered rows (details, then links); .ci keeps each item
+     atomic so a wrap never splits a multi-word value, and balance is a safety that only
+     kicks in if one row is long enough to wrap on its own */
   .contact { font-size: 10pt; }
+  .contact-row { text-wrap: balance; }
+  .contact .ci { white-space: nowrap; }
   .contact a { color: inherit; text-decoration: underline; }
   h2 {
     font-size: 12pt; font-variant: small-caps; font-weight: normal; letter-spacing: .3px;
@@ -695,7 +707,7 @@ function renderHtml(doc, segment, pageKey) {
 <header>
   <h1>${txt(doc.name)}</h1>
   ${isNonEmptyString(doc.headline) ? `<p class="headline">${txt(doc.headline)}</p>` : ''}
-  <div class="contact">${contactLine(doc)}</div>
+  <div class="contact">${contactRows(doc)}</div>
 </header>
 ${sections.join('\n')}
 </body>
