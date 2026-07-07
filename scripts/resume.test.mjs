@@ -237,10 +237,23 @@ test('render: jakegut layout — small-caps, pipe-separated contacts, two-row ex
   const r = run(['build', '--file', VALID, '--segment', 'product', '--out', out, '--json']);
   const html = readFileSync(JSON.parse(r.stdout).html, 'utf8');
   assert.match(html, /font-variant:\s*small-caps/);
-  assert.match(html, /grace@example\.com \| /, 'contact parts join with a pipe');
+  assert.match(html, /<div class="contact-row"><span class="ci">grace@example\.com<\/span> \| <span class="ci">Remote<\/span><\/div>/, 'contact details (email, location) grouped on their own row');
+  assert.match(html, /<div class="contact-row"><span class="ci"><a [^>]*>github\.com\/grace<\/a><\/span><\/div>/, 'links on a separate row');
   assert.match(html, /<span class="item-title">Founding Engineer<\/span>/, 'bold role on its own row');
   assert.doesNotMatch(html, /Founding Engineer, Compiler Co\./, 'role and company no longer merge on one line');
   assert.match(html, /<div class="item-row item-sub"><span>Compiler Co\.<\/span>/, 'italic company row below');
+});
+
+test('render: contact is two grouped rows (details | links), no dangling separator, multi-word value intact', () => {
+  const out = freshOut();
+  const r = run(['build', '--file', join(FIX, 'resume-contact.yaml'), '--segment', 'all', '--out', out, '--json']);
+  assert.equal(r.code, 0, r.stderr);
+  const html = readFileSync(JSON.parse(r.stdout).html, 'utf8');
+  // Row 1: email | phone | location, with the multi-word location in ONE atomic span and no trailing pipe.
+  assert.match(html, /<div class="contact-row"><span class="ci">grace@example\.com<\/span> \| <span class="ci">\+91 90000 00000<\/span> \| <span class="ci">Hyderabad, India<\/span><\/div>/, 'details row pipe-joined, location atomic, no trailing pipe');
+  // Row 2: the links, on their own row — details and links are not intermixed.
+  assert.match(html, /<div class="contact-row"><span class="ci"><a [^>]*>github\.com\/grace<\/a><\/span> \| <span class="ci"><a [^>]*>grace\.dev<\/a><\/span> \| <span class="ci"><a [^>]*>LinkedIn<\/a><\/span><\/div>/, 'links on a separate row');
+  assert.doesNotMatch(html, / \|<\/div>/, 'no separator ever sits at a row edge');
 });
 
 test('render: no Summary section when the master has none', () => {

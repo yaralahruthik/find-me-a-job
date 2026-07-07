@@ -1,0 +1,22 @@
+version: 1
+name: Grace Hopper
+headline: Senior Product Engineer
+email: grace@example.com
+phone: "+91 90000 00000"
+location: Hyderabad, India
+links:
+  - label: github.com/grace
+    url: https://github.com/grace
+  - label: grace.dev
+    url: https://grace.dev
+  - label: LinkedIn
+    url: https://linkedin.com/in/grace
+experience:
+  - company: Compiler Co.
+    role: Founding Engineer
+    start: 2024-01
+    end: present
+    bullets:
+      - id: billing
+        text: "Shipped the billing product to 40 paying teams; cut close time 6h to 20min."
+        segments: []

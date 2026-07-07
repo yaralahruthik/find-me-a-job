@@ -1,6 +1,6 @@
 {
   "name": "find-me-a-job",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Agent-native job-search operating system: a strict pipeline tracker, deterministic metrics, and a weekly review ritual. The philosophy is law.",
   "type": "module",
   "private": true,
