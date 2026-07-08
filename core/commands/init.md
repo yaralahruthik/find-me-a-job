@@ -79,6 +79,8 @@ Set `targets` in `config/profile.yaml`. Seed from `search_mode`:
 
 Tell them to **deliberately undershoot their enthusiasm** — week one's job is to be completable. A target missed twice becomes evidence against yourself.
 
+Also seed the `output` block in `config/profile.yaml` with the defaults (`layout: per-lead-folder`, `resume_filename: "{name}"`). No question needed — the defaults give every tracked application its own `data/out/<entry-id>/` folder with the resume named after the user, send-ready. Mention it in one line, and note they can switch to `layout: flat` (the old `data/out/resume-<id>.*` files) or change the `resume_filename` template if they prefer.
+
 ## 7. Cadence
 
 - Confirm `review_day` (Sunday works for most). Suggest they put a recurring 30-minute review block, and their application batches, in their calendar as fixed blocks.

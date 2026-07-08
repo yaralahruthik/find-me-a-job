@@ -1,0 +1,4 @@
+# Invalid: an overlay may not set output.layout (layout is a profile-level choice).
+version: 1
+output:
+  layout: flat

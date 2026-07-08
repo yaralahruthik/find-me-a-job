@@ -1,10 +1,12 @@
 # Per-application overlay — the honest way to keep a different resume per job.
 #
-# Real overlays live in config/tailor/<entry-id>.yaml (gitignored), where
-# <entry-id> matches a row id in data/pipeline.yaml. Then:
+# Real overlays live at data/out/<entry-id>/tailor.yaml (gitignored), where
+# <entry-id> matches a row id in data/pipeline.yaml. A legacy config/tailor/<entry-id>.yaml
+# is still read as a fallback, so overlays authored the old way keep working. Then:
 #
 #   node scripts/resume.mjs build --for <entry-id>
-#     → data/out/resume-<entry-id>.html   (add --pdf for a PDF)
+#     → data/out/<entry-id>/<your-name>.html   (add --pdf for a PDF)
+#     (under output.layout: flat instead → data/out/resume-<entry-id>.html)
 #
 # An overlay may ONLY select, reorder, and re-headline the ONE audited master
 # (config/resume.yaml). It cannot introduce a bullet — every id below must exist
@@ -21,6 +23,10 @@ headline: "Frontend-leaning Product Engineer"   # override the headline for this
 summary: "…"                     # override the summary; or `false` to hide it entirely
 date_granularity: year           # override the master's date style for THIS application: year | month
                                  #   (lets you A/B test a date format per job without touching the master)
+
+output:                          # optional; per-application override of the profile output default
+  resume_filename: "{name}-{role}"   # A/B test the sent filename for THIS job. Tokens: {name}, {role}, {company}.
+                                 #   (layout is a profile-level choice and cannot be overridden here)
 
 pin:     [public-api, de-users]  # master bullet ids to float to the top of their section
 drop:    [perf-replatform]       # master bullet ids to hide for this application

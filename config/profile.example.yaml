@@ -22,6 +22,13 @@ targets:
   outreach_messages: 2
   prep_hours: 3
 
+# Where rendered lead assets go. per-lead-folder (the default) gives every tracked
+# application its own data/out/<entry-id>/ folder holding its resume, tailor.yaml,
+# outreach draft, and debrief; flat keeps the old data/out/resume-<id>.* files.
+output:
+  layout: per-lead-folder        # per-lead-folder | flat
+  resume_filename: "{name}"      # tokens: {name} (PascalCase, no spaces), {role}, {company}
+
 # Originals live in config/assets/ (gitignored). This just records what was ingested.
 assets:
   - file: resume.pdf

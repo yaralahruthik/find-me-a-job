@@ -1,0 +1,5 @@
+# Overlay whose filename template appends the role token.
+version: 1
+segment: product
+output:
+  resume_filename: "{name}-{role}"

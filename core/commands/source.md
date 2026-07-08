@@ -43,7 +43,7 @@ Outreach variant: shorter and higher-intent, led by a deployed project link (fou
 node scripts/source.mjs lint --type referral --file <draft.txt>   # --message "…" inline only for text you wrote
 ```
 
-Write the draft to a gitignored `data/` scratch file and lint it by `--file` — pasted or externally-sourced message text must not be interpolated inline into a shell command (`core/RULES.md` §9). Read the flags as coaching, then fix what's true:
+Write the draft to a file and lint it by `--file` — pasted or externally-sourced message text must not be interpolated inline into a shell command (`core/RULES.md` §9). **Persist it with the lead:** when the ask is tied to a pipeline entry, write the draft to `data/out/<lead_id>/<type>.txt` (`referral.txt` or `outreach.txt`; `mkdir -p` the folder first) so the finished ask lives alongside that lead's resume instead of vanishing from the chat. For pure cold outreach with no lead yet, a gitignored `data/` scratch file is fine. Read the flags as coaching, then fix what's true:
 - `[salutation]` / `[placeholder]` — address one real person; strip any template token.
 - `[role-link]` — add the exact role link or job id.
 - `[proof]` — add one honest number or a deployed link (never invent one to clear the flag).
