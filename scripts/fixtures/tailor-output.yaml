@@ -1,0 +1,6 @@
+# Overlay that pins a deterministic resume filename and drops one bullet.
+version: 1
+segment: product
+drop: [billing]
+output:
+  resume_filename: "{name}"

@@ -1,0 +1,3 @@
+# Invalid: output must be a mapping, not a scalar.
+version: 1
+output: nope

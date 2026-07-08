@@ -11,7 +11,7 @@
 // isolated here so the core tracker installs and runs with `yaml` alone.
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
 
@@ -21,6 +21,7 @@ const MONTH_RE = /^\d{4}-\d{2}$/;        // YYYY-MM (resume dates are month-gran
 const DASH_RE = /[—–]/;                  // em dash / en dash — flagged by lint, normalized at render
 const PAGE_FORMATS = { letter: 'Letter', a4: 'A4' };
 const DATE_GRANULARITIES = ['year', 'month'];   // how experience dates render (see fmtRange); default 'month'
+const OUTPUT_LAYOUTS = new Set(['per-lead-folder', 'flat']);   // per-lead build layout (see resolveOutputConfig)
 
 // Renderable sections, in default order. `section_order:` in resume.yaml may
 // reorder them (e.g. a fresh grad putting education first); sections it omits
@@ -242,7 +243,7 @@ function validateResume(doc) {
 // An overlay tailors the master for one application. It may ONLY select, reorder,
 // and re-headline — never introduce content. Every bullet it names must already
 // exist in the master, which makes per-JD fabrication structurally impossible.
-const OVERLAY_KEYS = new Set(['version', 'entry', 'role', 'segment', 'headline', 'summary', 'date_granularity', 'pin', 'drop', 'include']);
+const OVERLAY_KEYS = new Set(['version', 'entry', 'role', 'segment', 'headline', 'summary', 'date_granularity', 'output', 'pin', 'drop', 'include']);
 
 function validateOverlay(ov, masterIds) {
   const errors = [];
@@ -259,6 +260,14 @@ function validateOverlay(ov, masterIds) {
   if (ov.headline !== undefined && !isNonEmptyString(ov.headline)) errors.push('overlay "headline" must be a non-empty string');
   if (ov.summary !== undefined && ov.summary !== false && !isNonEmptyString(ov.summary)) errors.push('overlay "summary" must be a string, or false to hide it');
   if (ov.date_granularity !== undefined && !DATE_GRANULARITIES.includes(ov.date_granularity)) errors.push(`overlay "date_granularity" must be one of: ${DATE_GRANULARITIES.join(', ')}`);
+  if (ov.output !== undefined) {
+    if (ov.output === null || typeof ov.output !== 'object' || Array.isArray(ov.output)) errors.push('overlay "output" must be a mapping (only resume_filename is allowed)');
+    else for (const k of Object.keys(ov.output)) {
+      if (k === 'resume_filename') { if (!isNonEmptyString(ov.output.resume_filename)) errors.push('overlay "output.resume_filename" must be a non-empty string'); }
+      else if (k === 'layout') errors.push('overlay "output.layout" is not allowed — layout is a profile-level choice; overlays may only override resume_filename');
+      else errors.push(`overlay "output" has unknown key "${k}" (only resume_filename is allowed)`);
+    }
+  }
   for (const key of ['pin', 'drop', 'include']) {
     if (ov[key] === undefined) continue;
     if (!Array.isArray(ov[key])) { errors.push(`overlay "${key}" must be a list of bullet ids`); continue; }
@@ -277,32 +286,96 @@ function safeSlug(s) {
   return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
 }
 
+// PascalCase a display name into a spaceless filename token: "Hruthik Reddy Yarala" -> "HruthikReddyYarala".
+// Splits on any non-alphanumeric run (Unicode letters/numbers kept), capitalizes each token's first
+// character, and preserves the rest so internal capitals survive ("McDonald" -> "McDonald").
+function pascalName(name) {
+  return String(name == null ? '' : name)
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(Boolean)
+    .map((t) => t.charAt(0).toUpperCase() + t.slice(1))
+    .join('');
+}
+
+// Case-preserving filename sanitizer. Unlike safeSlug (which lowercases and kebab-cases), this keeps the
+// resume file human-facing (e.g. "HruthikReddyYarala") while still stripping anything path-unsafe.
+function safeFilename(s) {
+  return String(s == null ? '' : s)
+    .replace(/[^A-Za-z0-9._-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^[-.]+|[-.]+$/g, '')
+    .slice(0, 120);
+}
+
+// Expand a resume_filename template into a base filename (no extension). Tokens: {name}, {role}, {company}.
+// name and company render PascalCase; role is sanitized in place (keeps its own casing). Always yields a
+// non-empty, path-safe base, falling back to the PascalCase name, then "resume".
+function applyFilenameTemplate(tpl, { name, role, company }) {
+  const out = String(tpl || '{name}')
+    .replace(/\{name\}/g, pascalName(name))
+    .replace(/\{role\}/g, safeFilename(role))
+    .replace(/\{company\}/g, pascalName(company));
+  return safeFilename(out) || pascalName(name) || 'resume';
+}
+
+// Resolve the per-lead output layout + resume filename template. The profile (config/profile.yaml, its
+// output: block) sets the default; an overlay may override resume_filename ONLY (layout is a profile-level
+// choice so the overlay's own location stays deterministic). A --layout flag overrides for one build/test.
+function resolveOutputConfig(overlay, args) {
+  const p = loadYaml(join(ROOT, 'config/profile.yaml')) || loadYaml(join(ROOT, 'config/profile.example.yaml'));
+  const out = (p && p.output && typeof p.output === 'object') ? p.output : {};
+  let layout = isNonEmptyString(out.layout) ? out.layout : 'per-lead-folder';
+  if (args && isNonEmptyString(args.flags.layout)) layout = args.flags.layout;
+  if (!OUTPUT_LAYOUTS.has(layout)) die(2, `Unknown output layout "${layout}" (allowed: ${[...OUTPUT_LAYOUTS].join(' | ')})`);
+  let resumeFilename = isNonEmptyString(out.resume_filename) ? out.resume_filename : '{name}';
+  if (overlay && overlay.output && isNonEmptyString(overlay.output.resume_filename)) resumeFilename = overlay.output.resume_filename;
+  return { layout, resume_filename: resumeFilename };
+}
+
 // Load the overlay for --for <entry-id> (or --tailor-file <path> for tests).
 // Returns { forId, overlay, note }. Exits 1 if the overlay is malformed. An
 // absent overlay is fine — an application can be tailored by segment alone.
-function resolveOverlay(args, doc) {
+// Under the default per-lead-folder layout the overlay lives with the lead at
+// <baseDir>/<id>/tailor.yaml; the legacy config/tailor/<id>.yaml is still read as
+// a fallback so existing overlays keep working with no migration.
+function resolveOverlay(args, doc, { layout = 'per-lead-folder', baseDir = join(ROOT, 'data/out') } = {}) {
   // Slug the id so it can't traverse the tailor path or the output basename.
   const forId = args.flags.for ? safeSlug(args.flags.for) : null;
+
+  const loadAndValidate = (ovPath) => {
+    const overlay = loadYaml(ovPath) || {};
+    const errs = validateOverlay(overlay, collectBulletIds(doc));
+    if (errs.length) {
+      process.stderr.write(`Overlay ${ovPath} is invalid:\n`);
+      errs.forEach((e) => process.stderr.write(`ERROR ${e}\n`));
+      process.exit(1);
+    }
+    return overlay;
+  };
+
+  // An explicit --tailor-file path always wins (tests, power users).
+  if (args.flags['tailor-file']) {
+    const ovPath = resolve(args.flags['tailor-file']);
+    if (!existsSync(ovPath)) return { forId, overlay: {}, note: `no overlay at ${ovPath} — building by segment only. Add one to pin/drop/re-headline for this application.` };
+    return { forId, overlay: loadAndValidate(ovPath), note: null };
+  }
+
   if (!forId) return { forId: null, overlay: {}, note: null };
-  const ovPath = args.flags['tailor-file'] ? resolve(args.flags['tailor-file']) : join(ROOT, 'config/tailor', `${forId}.yaml`);
-  if (!existsSync(ovPath)) {
-    return { forId, overlay: {}, note: `no overlay at ${ovPath} — building by segment only. Add one to pin/drop/re-headline for this application.` };
-  }
-  const overlay = loadYaml(ovPath) || {};
-  const errs = validateOverlay(overlay, collectBulletIds(doc));
-  if (errs.length) {
-    process.stderr.write(`Overlay ${ovPath} is invalid:\n`);
-    errs.forEach((e) => process.stderr.write(`ERROR ${e}\n`));
-    process.exit(1);
-  }
-  return { forId, overlay, note: null };
+
+  // Per-lead folder overlay first, then the legacy config/tailor/<id>.yaml fallback.
+  const candidates = [];
+  if (layout === 'per-lead-folder') candidates.push(join(baseDir, forId, 'tailor.yaml'));
+  candidates.push(join(ROOT, 'config/tailor', `${forId}.yaml`));
+  const ovPath = candidates.find((p) => existsSync(p));
+  if (!ovPath) return { forId, overlay: {}, note: `no overlay at ${candidates[0]} — building by segment only. Add one to pin/drop/re-headline for this application.` };
+  return { forId, overlay: loadAndValidate(ovPath), note: null };
 }
 
-// Soft check: is this application actually in the tracker? true / false / null (unknown).
-function pipelineHasEntry(id) {
+// The tracker entries, or null when the tracker is missing/unreadable (unknown vs. known-absent). Used to
+// soft-check whether an application is logged, and to source the {company} filename token.
+function trackerEntries() {
   const doc = loadYaml(join(ROOT, 'data/pipeline.yaml'));
-  if (!doc || !Array.isArray(doc.entries)) return null;
-  return doc.entries.some((e) => e && e.id === id);
+  return (doc && Array.isArray(doc.entries)) ? doc.entries : null;
 }
 
 // ---------- segment + overlay selection ----------
@@ -770,7 +843,9 @@ function cmdLint(args) {
     errors.forEach((e) => process.stderr.write(`ERROR ${e}\n`));
     process.exit(1);
   }
-  const { overlay } = resolveOverlay(args, doc);
+  const { layout } = resolveOutputConfig({}, args);
+  const baseDir = args.flags.out ? resolve(args.flags.out) : join(ROOT, 'data/out');
+  const { overlay } = resolveOverlay(args, doc, { layout, baseDir });
   const { segSet, segLabel } = resolveFraming(args, overlay, doc);
   const report = lintResume(doc, segSet, segLabel, overlay);
   if (args.flags.json) { process.stdout.write(JSON.stringify(report, null, 2) + '\n'); process.exit(0); }
@@ -838,7 +913,9 @@ function cmdCoverage(args) {
     process.exit(1);
   }
   const keywords = collectKeywords(args);
-  const { overlay } = resolveOverlay(args, doc);
+  const { layout } = resolveOutputConfig({}, args);
+  const baseDir = args.flags.out ? resolve(args.flags.out) : join(ROOT, 'data/out');
+  const { overlay } = resolveOverlay(args, doc, { layout, baseDir });
   const { segSet, segLabel, headline } = resolveFraming(args, overlay, doc);
   const selected = selectForSegment(doc, segSet, overlay);
   selected.headline = headline;
@@ -876,7 +953,11 @@ async function cmdBuild(args) {
     process.exit(1);
   }
 
-  const { forId, overlay, note } = resolveOverlay(args, doc);
+  const baseDir = args.flags.out ? resolve(args.flags.out) : join(ROOT, 'data/out');
+  // Layout is a profile-level choice (an overlay can't move its own location), so resolve it before we
+  // locate the overlay; resume_filename may then be overridden by that overlay.
+  const { layout } = resolveOutputConfig({}, args);
+  const { forId, overlay, note } = resolveOverlay(args, doc, { layout, baseDir });
   const { segSet, segLabel, headline, role } = resolveFraming(args, overlay, doc);
   const pageKey = String(args.flags.page || 'letter').toLowerCase();
   if (!PAGE_FORMATS[pageKey]) die(2, `Unknown --page "${pageKey}" (allowed: letter | a4)`);
@@ -885,19 +966,30 @@ async function cmdBuild(args) {
   selected.headline = headline;
   const html = renderHtml(selected, segLabel, pageKey);
 
-  const outDir = args.flags.out ? resolve(args.flags.out) : join(ROOT, 'data/out');
+  // A tracked application (--for <id>) under the default layout gets its own data/out/<id>/ folder, with the
+  // resume named after the user so it is send-ready with no renaming. Segment/role builds and layout: flat
+  // keep the flat resume-<slug>.{html,pdf} names.
+  const entries = forId ? trackerEntries() : null;
+  const pipeEntry = entries ? (entries.find((e) => e && e.id === forId) || null) : null;
+  const perLead = layout === 'per-lead-folder' && !!forId;
+  const outDir = perLead ? join(baseDir, forId) : baseDir;
   mkdirSync(outDir, { recursive: true });
-  // Slug the filename component (forId is already slugged; role/segLabel are not).
-  const base = `resume-${safeSlug(forId || role || segLabel) || 'resume'}`;
+  const base = perLead
+    ? applyFilenameTemplate(resolveOutputConfig(overlay, args).resume_filename, { name: doc.name, role: role || segLabel, company: pipeEntry && pipeEntry.company })
+    // Slug the filename component (forId is already slugged; role/segLabel are not).
+    : `resume-${safeSlug(forId || role || segLabel) || 'resume'}`;
   const htmlPath = join(outDir, `${base}.html`);
-  // Belt-and-suspenders: the render must land directly inside outDir, never above it.
+  // Belt-and-suspenders: the render must land directly inside outDir, and outDir must sit inside baseDir
+  // (one level down for a per-lead folder), never above it.
   if (dirname(resolve(htmlPath)) !== resolve(outDir)) die(2, `Refusing to write outside the output directory: ${htmlPath}`);
+  const baseResolved = resolve(baseDir), outResolved = resolve(outDir);
+  if (outResolved !== baseResolved && !outResolved.startsWith(baseResolved + sep)) die(2, `Refusing to write outside the output directory: ${outDir}`);
   writeFileSync(htmlPath, html);
 
   const bulletsIncluded = selected.experience.reduce((n, e) => n + e.bullets.length, 0)
     + selected.projects.reduce((n, p) => n + p.bullets.length, 0);
 
-  const trackerNote = forId && pipelineHasEntry(forId) === false
+  const trackerNote = forId && entries && !pipeEntry
     ? `no pipeline entry "${forId}" — log this application with /fh so the funnel counts it.`
     : null;
 
@@ -910,7 +1002,7 @@ async function cmdBuild(args) {
   }
 
   if (args.flags.json) {
-    process.stdout.write(JSON.stringify({ ok: true, for: forId, role, segment: segLabel, html: htmlPath, pdf, pdf_note: pdfNote, bullets_included: bulletsIncluded, overlay_note: note, tracker_note: trackerNote }, null, 2) + '\n');
+    process.stdout.write(JSON.stringify({ ok: true, for: forId, role, segment: segLabel, layout, dir: outDir, html: htmlPath, pdf, pdf_note: pdfNote, bullets_included: bulletsIncluded, overlay_note: note, tracker_note: trackerNote }, null, 2) + '\n');
     process.exit(0);
   }
   const framingLabel = role ? `role "${role}" (${segLabel})` : `segment "${segLabel}"`;
@@ -942,8 +1034,10 @@ else die(2, `Usage: resume.mjs <validate|lint|bullet|coverage|build> [--file <pa
                       which JD keywords appear in the resume you'd send (present), live elsewhere
                       in the master record (in_master, with bullet ids), or are absent (missing)
   build    [--segment a,b | --role <name>] [--for <id>] [--pdf]   render a resume
-           [--page letter|a4] [--out <dir>]
+           [--page letter|a4] [--out <dir>] [--layout per-lead-folder|flat]
     --segment a,b     union of segments to include (e.g. product,backend)
     --role <name>     a framing preset from roles: in config/resume.yaml (headline + segments)
-    --for <entry-id>  tailor for one application via config/tailor/<entry-id>.yaml
-                      (overlay selects/pins/drops master bullets — never invents)`);
+    --for <entry-id>  tailor for one application; default layout writes data/out/<entry-id>/<your-name>.{html,pdf}
+                      and reads the overlay from data/out/<entry-id>/tailor.yaml (legacy config/tailor/<entry-id>.yaml
+                      still read as a fallback). The overlay selects/pins/drops master bullets, never invents.
+    --layout ...      override the profile output.layout for this build (flat keeps the old resume-<id>.* names)`);

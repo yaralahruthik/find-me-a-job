@@ -17,7 +17,7 @@ This is the CLI-agnostic routing table for the `fh` system. A host wrapper (Clau
 | `source` *(or `outreach`)* | `core/commands/source.md` | Work the referral & outreach channels: fill leads, draft a specific ask, quality-check it, log it |
 | `leads` *(or `ingest`)* | `core/commands/leads.md` | Turn found job URLs, or a named company's careers-page openings, into deduped, id-assigned candidate lead rows to confirm and log |
 | `two-month-test` *(or `capture`, `get-me-numbers`)* | `core/commands/two-month-test.md` | Capture a just-shipped feature's numbers while they're fresh: excavate the metric, draft an evidence bullet, fold it into `config/resume.yaml` |
-| `loop` *(or `interview`, `prep`, `debrief`)* | `core/commands/loop.md` | Prep the interview loop on its actual content, run the seniority-fit check, and debrief each round while it's fresh into `data/debriefs/<entry-id>.md` |
+| `loop` *(or `interview`, `prep`, `debrief`)* | `core/commands/loop.md` | Prep the interview loop on its actual content, run the seniority-fit check, and debrief each round while it's fresh into `data/out/<entry-id>/debrief.md` |
 | `validate` | `core/commands/validate.md` | Check `data/pipeline.yaml` and fix any problems |
 
 **Freeform default:** if the argument is not one of the keywords above, it is almost always a logging request. Route to `log`.
@@ -77,7 +77,7 @@ For the resume tooling (`config/resume.yaml`, isolated from the tracker — neve
 - `node scripts/resume.mjs coverage --keywords "a,b,…" --role fullstack --json` — which JD keywords literally appear in the resume you'd send; informs, never gates.
 - `node scripts/resume.mjs build --segment product[,backend] [--pdf] [--page a4]` — render a segment (or a union) into `data/out/`.
 - `node scripts/resume.mjs build --role fullstack [--pdf]` — render a role framing (headline + segments) preset in `config/resume.yaml`.
-- `node scripts/resume.mjs build --for <entry-id> [--pdf]` — render a per-application resume using `config/tailor/<entry-id>.yaml` (an overlay that selects from the master; never invents).
+- `node scripts/resume.mjs build --for <entry-id> [--pdf]` — render a per-application resume into the lead's folder `data/out/<entry-id>/<your-name>.{html,pdf}`, using the overlay at `data/out/<entry-id>/tailor.yaml` (legacy `config/tailor/<entry-id>.yaml` still read as a fallback; the overlay selects from the master, never invents). `--layout flat` reverts to `data/out/resume-<entry-id>.html`.
 
 For sourcing (drafted messages only — no personal data, no tracker):
 

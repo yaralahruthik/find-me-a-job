@@ -104,9 +104,14 @@ proof_points:                  # evidence bullets/projects distilled from the re
   - "Shipped expense tracker to 40 real users; React + Node."
 interview_assets:              # optional: proof that didn't earn resume space but belongs in a loop
   - "Side project: expense tracker, live at a real URL, 40 real users; good system-design story."
+output:                        # optional; where rendered lead assets go (defaults below preserve old behavior)
+  layout: per-lead-folder      # per-lead-folder | flat
+  resume_filename: "{name}"    # tokens: {name} (PascalCase, no spaces), {role}, {company}
 ```
 
 Default targets: `full-time` → applications 15, referral_asks 3, outreach_messages 2, prep_hours 5. `employed` → 7 / 2 / 2 / 3.
+
+`output` defaults to `layout: per-lead-folder` / `resume_filename: "{name}"` when absent. See "per-lead asset folder" below.
 
 ## `config/baselines.yaml`
 
@@ -204,9 +209,11 @@ Precedence (highest first): explicit `--segment`/`--role` → the overlay's `seg
 
 ---
 
-## `config/tailor/<entry-id>.yaml` — per-application overlays
+## `data/out/<entry-id>/tailor.yaml` — per-application overlays
 
-Personal, gitignored (the whole `config/tailor/` directory). One overlay per application, where `<entry-id>` matches a row `id` in `data/pipeline.yaml`. `scripts/resume.mjs build --for <entry-id>` applies it to the master and writes `data/out/resume-<entry-id>.html`. `config/tailor.example.yaml` shows the shape.
+Personal, gitignored. One overlay per application, where `<entry-id>` matches a row `id` in `data/pipeline.yaml`. Under the default `per-lead-folder` layout the overlay lives with the lead at `data/out/<entry-id>/tailor.yaml`; a legacy `config/tailor/<entry-id>.yaml` is still read as a fallback, so overlays authored the old way keep working with no migration. `scripts/resume.mjs build --for <entry-id>` applies it to the master and writes the resume into `data/out/<entry-id>/` (see "per-lead asset folder" below). `config/tailor.example.yaml` shows the shape.
+
+Note: although `tailor.yaml` lives under the `data/out/` output tree, it is a **durable, hand-authored input**, not a regenerated artifact. If you routinely `rm -rf data/out` to clear renders, keep your overlay at the legacy `config/tailor/<entry-id>.yaml` instead (still read as a fallback).
 
 An overlay **only selects, reorders, and re-headlines** the one audited master. It cannot introduce content — every bullet id it names must already exist in `config/resume.yaml`. This is deliberate: it keeps exactly one place any claim can live, so per-JD tailoring can never become per-JD fabrication.
 
@@ -217,6 +224,8 @@ segment: product            # optional; a string or list; overrides the role's s
 headline: "…"               # optional; override the headline for this JD (beats the role's)
 summary: "…"                # optional; override the summary, or `false` to hide it
 date_granularity: year      # optional; override the master's date style for this application (year | month) — handy for A/B testing a date format per job
+output:                     # optional; per-application override of the profile output default
+  resume_filename: "{name}-{role}"   # A/B test the sent filename for this job (layout is not overridable here)
 pin:     [mcp-server, soc2] # optional; master bullet ids floated to the top of their section
 drop:    [withyhr-leads]    # optional; master bullet ids hidden for this application
 include: [some-bullet-id]   # optional; force-include a bullet its segment would exclude
@@ -224,17 +233,44 @@ include: [some-bullet-id]   # optional; force-include a bullet its segment would
 
 ### Overlay validation (exit 1 on any violation)
 
-1. The overlay is a mapping. Only these keys are allowed: `version`, `entry`, `role`, `segment`, `headline`, `summary`, `date_granularity`, `pin`, `drop`, `include`. A content key (`bullets`, `text`, `experience`, `projects`, `skills`) is rejected with a pointer to add the bullet to the master instead.
+1. The overlay is a mapping. Only these keys are allowed: `version`, `entry`, `role`, `segment`, `headline`, `summary`, `date_granularity`, `output`, `pin`, `drop`, `include`. A content key (`bullets`, `text`, `experience`, `projects`, `skills`) is rejected with a pointer to add the bullet to the master instead.
 2. `role`/`headline` are non-empty strings; `segment` is a non-empty string or list of strings; `summary` is a string or `false`; `date_granularity` (if present) is `year` or `month`. (An unknown `role` name surfaces at build time, exit 2.)
-3. `pin`/`drop`/`include` are lists of strings, and **every id must exist in the master's bullet ids**. A dangling reference is an error.
+3. `output` (if present) is a mapping whose only key is `resume_filename` (a non-empty string). `output.layout` is rejected: layout is a profile-level choice so the overlay's own location stays deterministic.
+4. `pin`/`drop`/`include` are lists of strings, and **every id must exist in the master's bullet ids**. A dangling reference is an error.
 
 A missing overlay file for `--for <id>` is **not** an error — the build proceeds by segment alone and prints a soft note. If `<entry-id>` isn't a row in `data/pipeline.yaml`, the build still runs and nudges you to log the application.
 
 ---
 
+## `data/out/<entry-id>/` — per-lead asset folder
+
+Personal, gitignored (all of `data/`). Under the default `output.layout: per-lead-folder`, every tracked application (`--for <entry-id>`) gets its own folder holding all of that lead's assets, so a resume is send-ready with no copying or renaming:
+
+| File | Written by | Notes |
+|---|---|---|
+| `<resume_filename>.html` / `.pdf` | `/fh resume` (`resume.mjs build --for`) | `resume_filename` default `{name}` renders the user's name PascalCase, no spaces (e.g. `HruthikReddyYarala`). Tokens: `{name}`, `{company}` (PascalCase), `{role}` (sanitized, case kept). |
+| `tailor.yaml` | `/fh resume`, `/fh evaluate` | the per-application overlay (durable input; see above) |
+| `outreach.txt` / `referral.txt` | `/fh source` | the drafted, linted ask, persisted for the lead (only when the ask has a `lead_id`; pure cold outreach with no lead stays a gitignored `data/` scratch file) |
+| `debrief.md` | `/fh loop` | the interview prep + per-round post-mortem |
+
+`resume_filename` comes from `config/profile.yaml` `output.resume_filename`, overridable per-application via the overlay's `output.resume_filename`. The folder is created lazily, on the first asset write (most leads never earn a tailored resume, so folders track only leads that actually have assets).
+
+Under `output.layout: flat` (or for segment/role builds that have no `--for` id), the old flat locations are used instead:
+
+| Asset | per-lead-folder (default) | flat |
+|---|---|---|
+| resume | `data/out/<id>/<name>.{html,pdf}` | `data/out/resume-<id>.{html,pdf}` |
+| overlay read | `data/out/<id>/tailor.yaml`, then `config/tailor/<id>.yaml` | `config/tailor/<id>.yaml` |
+| debrief | `data/out/<id>/debrief.md` | `data/debriefs/<id>.md` |
+| outreach draft | `data/out/<id>/<type>.txt` | gitignored `data/` scratch file |
+
+A `--layout per-lead-folder|flat` flag on `resume.mjs build` overrides the profile layout for one render.
+
+---
+
 ## Sourcing (`scripts/source.mjs`, `/fh source`)
 
-`source.mjs lint (--message "…" | --file <path>) [--type referral|outreach]` is the deterministic half of `/fh source`: it scans a **drafted** referral ask or outreach message against the "specific and finished" checklist and returns `{ type, word_count, flags }`. Flags: `placeholder` (unfilled template token / to-anyone salutation), `salutation` (no personal name), `role-link` (no link or job id), `proof` (no number and no link), `out` (no low-pressure out), `length` (over ~130 words for referral, ~90 for outreach). Like `resume lint`, it always exits 0 and **never gates** — a flagged ask still sends. It reads only the message text passed to it (drafts, if saved, belong in gitignored `data/`); it needs no `yaml` and touches no personal file.
+`source.mjs lint (--message "…" | --file <path>) [--type referral|outreach]` is the deterministic half of `/fh source`: it scans a **drafted** referral ask or outreach message against the "specific and finished" checklist and returns `{ type, word_count, flags }`. Flags: `placeholder` (unfilled template token / to-anyone salutation), `salutation` (no personal name), `role-link` (no link or job id), `proof` (no number and no link), `out` (no low-pressure out), `length` (over ~130 words for referral, ~90 for outreach). Like `resume lint`, it always exits 0 and **never gates** — a flagged ask still sends. It reads only the message text passed to it (a saved draft for a tracked lead lives at `data/out/<lead_id>/<type>.txt`; a draft with no lead is a gitignored `data/` scratch file); it needs no `yaml` and touches no personal file.
 
 `/fh source` persists nothing new: a sent ask is logged into the existing `data/pipeline.yaml` `asks` list (an input, never an `entries` application — `core/RULES.md` §3). For budget coaching it reads `pipeline.mjs metrics`, whose output now includes **`leads_by_channel`** — a map of open-lead counts (`stage: lead`, not closed) grouped by `channel`, alongside `leads_remaining` — so "fill the list to 20, tagged by channel" is visible.
 
@@ -254,7 +290,7 @@ It reads the tracker **only** to dedup and avoid id collisions — a missing def
 
 ## Interviews (`scripts/pipeline.mjs interviews`, `/fh loop`)
 
-`pipeline.mjs interviews [--file <path>]` is the deterministic half of `/fh loop`: it lists the **live** interviews — entries at stage `screen` or `loop` that aren't `closed` — as `{ interviews, count }`, each `{ id, company, role, stage, rounds, last_date, days_since }` sorted stalest-first (`last_date` = the entry's most recent `history` event, so a fresh loop round is not mis-flagged stale; `days_since` = days since it; `rounds` = count of dated `loop` events). It refuses on invalid data (exit 1, like `metrics`), exits 3 on a missing file, and otherwise always exits 0. It reads the tracker only and **never writes**. It deliberately computes **no per-round conversion** — a loop is one stage, each round a dated event (`core/RULES.md` §1); the `screen_to_loop` / `loop_to_offer` arrows in `metrics` remain the only loop conversions. The interview craft (prep plan, per-round post-mortems) is persisted separately in `data/debriefs/<entry-id>.md`, never in the tracker.
+`pipeline.mjs interviews [--file <path>]` is the deterministic half of `/fh loop`: it lists the **live** interviews — entries at stage `screen` or `loop` that aren't `closed` — as `{ interviews, count }`, each `{ id, company, role, stage, rounds, last_date, days_since }` sorted stalest-first (`last_date` = the entry's most recent `history` event, so a fresh loop round is not mis-flagged stale; `days_since` = days since it; `rounds` = count of dated `loop` events). It refuses on invalid data (exit 1, like `metrics`), exits 3 on a missing file, and otherwise always exits 0. It reads the tracker only and **never writes**. It deliberately computes **no per-round conversion** — a loop is one stage, each round a dated event (`core/RULES.md` §1); the `screen_to_loop` / `loop_to_offer` arrows in `metrics` remain the only loop conversions. The interview craft (prep plan, per-round post-mortems) is persisted separately in the lead's folder at `data/out/<entry-id>/debrief.md` (flat layout: `data/debriefs/<entry-id>.md`), never in the tracker.
 
 `pipeline.mjs trends [--file <path>] [--max-weeks N]` reconstructs the four funnel arrows (`app_to_response`, `response_to_screen`, `screen_to_loop`, `loop_to_offer`) **as of each past week-ending date**, walking ISO weeks from the first application's week to now. It's **cumulative**, not per-week-cohort: each week recomputes the whole funnel as it stood then (`reachedAsOf` reads the `history` timeline; a row counts as closed-as-of via `closed_date`), so the resolved sample only grows and an arrow stays honest — `verdict` still marks anything under `min_sample` as `insufficient-sample` (RULES §6). Returns `{ weeks: [{ week, ending, arrows }], truncated, min_sample }`, most-recent `--max-weeks` (default 12) weeks. It informs `/fh review`'s week-6 persist-or-pivot check; reads only, refuses on invalid data (exit 1), exit 3 on a missing file, never gates.
 
@@ -268,9 +304,9 @@ It reads the tracker **only** to dedup and avoid id collisions — a missing def
 
 One file per weekly review, e.g. `data/reviews/2026-W27.md`. Structure in `core/templates/review.template.md`: the five numbers (pasted verbatim from script output), an inputs-vs-targets grade table with self-reported prep hours, last week's one-change result, this week's one-change sentence, and the wins logged.
 
-## `data/debriefs/<entry-id>.md`
+## `data/out/<entry-id>/debrief.md`
 
-One file per interview loop, keyed to an entry `id` in `data/pipeline.yaml` (the same per-id convention as `config/tailor/<entry-id>.yaml`), written by `/fh loop`. Structure in `core/templates/debrief.template.md`: a header, a **seniority-fit** line, a prep plan (the rounds this company runs, what to drill, the proof to have ready), a repeatable per-round post-mortem (what was asked, where it wobbled, a next-prep note), and an outcome line. Unparsed narrative markdown — **informational, never gated, never counted, never read by any script.** The funnel truth stays in the tracker (stage + `history`); each round also leaves a dated `{ stage: loop, date, round, note }` event in the entry's `history` (and, if useful, one terse `notes` line). Gitignored like all of `data/`.
+One file per interview loop, keyed to an entry `id` in `data/pipeline.yaml`, written by `/fh loop` into the lead's folder (flat layout: `data/debriefs/<entry-id>.md`). Structure in `core/templates/debrief.template.md`: a header, a **seniority-fit** line, a prep plan (the rounds this company runs, what to drill, the proof to have ready), a repeatable per-round post-mortem (what was asked, where it wobbled, a next-prep note), and an outcome line. Unparsed narrative markdown — **informational, never gated, never counted, never read by any script.** The funnel truth stays in the tracker (stage + `history`); each round also leaves a dated `{ stage: loop, date, round, note }` event in the entry's `history` (and, if useful, one terse `notes` line). Gitignored like all of `data/`.
 
 ## `data/wins.md`
 

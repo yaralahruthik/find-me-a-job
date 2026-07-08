@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -119,7 +119,7 @@ test('validate: duplicate bullet ids in the master are rejected', () => {
 
 test('build --for: overlay drops, force-includes, and re-headlines from the master', () => {
   const out = freshOut();
-  const r = run(['build', '--file', VALID, '--for', 'stripe-swe',
+  const r = run(['build', '--file', VALID, '--for', 'stripe-swe', '--layout', 'flat',
     '--tailor-file', join(FIX, 'tailor-valid.yaml'), '--out', out, '--json']);
   assert.equal(r.code, 0, r.stderr);
   const res = JSON.parse(r.stdout);
@@ -151,11 +151,77 @@ test('build --for: a content-bearing or dangling-reference overlay is refused (e
 
 test('build --for: missing overlay is a soft note, not a failure', () => {
   const out = freshOut();
-  const r = run(['build', '--file', VALID, '--for', 'never-tailored', '--segment', 'product', '--out', out, '--json']);
+  const r = run(['build', '--file', VALID, '--for', 'never-tailored', '--segment', 'product', '--layout', 'flat', '--out', out, '--json']);
   assert.equal(r.code, 0, r.stderr);
   const res = JSON.parse(r.stdout);
   assert.match(res.overlay_note, /no overlay at/);
   assert.match(res.html, /resume-never-tailored\.html$/);
+});
+
+// ---------- per-lead output folders (Phase 9) ----------
+
+test('build --for: default layout writes data/out/<id>/<name>.{html} named after the user', () => {
+  const out = freshOut();
+  const r = run(['build', '--file', VALID, '--for', 'stripe-swe', '--layout', 'per-lead-folder',
+    '--tailor-file', join(FIX, 'tailor-output.yaml'), '--out', out, '--json']);
+  assert.equal(r.code, 0, r.stderr);
+  const res = JSON.parse(r.stdout);
+  assert.equal(res.layout, 'per-lead-folder');
+  assert.equal(res.dir, join(out, 'stripe-swe'), 'the lead gets its own folder named by the entry id');
+  assert.match(res.html, /stripe-swe\/GraceHopper\.html$/, 'the resume is named after the user (PascalCase, no spaces)');
+  const html = readFileSync(res.html, 'utf8');
+  assert.doesNotMatch(html, /billing product/, 'the overlay still drops bullets in the new layout');
+});
+
+test('build --for: overlay resume_filename template beats the profile default (A/B)', () => {
+  const out = freshOut();
+  const r = run(['build', '--file', VALID, '--for', 'stripe-swe', '--segment', 'product', '--layout', 'per-lead-folder',
+    '--tailor-file', join(FIX, 'tailor-output-role.yaml'), '--out', out, '--json']);
+  assert.equal(r.code, 0, r.stderr);
+  const res = JSON.parse(r.stdout);
+  assert.match(res.html, /stripe-swe\/GraceHopper-product\.html$/, '{name}-{role} expands to PascalCase name + sanitized role');
+});
+
+test('build --for: overlay resolves from the lead folder first (new location wins)', () => {
+  const out = freshOut();
+  mkdirSync(join(out, 'stripe-swe'), { recursive: true });
+  writeFileSync(join(out, 'stripe-swe', 'tailor.yaml'),
+    'version: 1\nsegment: product\ndrop: [billing]\noutput:\n  resume_filename: "{name}"\n');
+  const r = run(['build', '--file', VALID, '--for', 'stripe-swe', '--layout', 'per-lead-folder', '--out', out, '--json']);
+  assert.equal(r.code, 0, r.stderr);
+  const res = JSON.parse(r.stdout);
+  assert.equal(res.overlay_note, null, 'the folder overlay was found, no soft note');
+  assert.match(res.html, /stripe-swe\/GraceHopper\.html$/);
+  assert.doesNotMatch(readFileSync(res.html, 'utf8'), /billing product/, 'the folder tailor.yaml was applied');
+});
+
+test('build --for: a missing overlay names the lead-folder path first', () => {
+  const out = freshOut();
+  const r = run(['build', '--file', VALID, '--for', 'never-tailored', '--segment', 'product', '--layout', 'per-lead-folder', '--out', out, '--json']);
+  assert.equal(r.code, 0, r.stderr);
+  const res = JSON.parse(r.stdout);
+  assert.match(res.overlay_note, /never-tailored\/tailor\.yaml/, 'the new folder location is checked first');
+});
+
+test('build --for: an overlay setting output.layout is refused (exit 1)', () => {
+  const out = freshOut();
+  const r = run(['build', '--file', VALID, '--for', 'x', '--tailor-file', join(FIX, 'tailor-output-bad.yaml'), '--out', out]);
+  assert.equal(r.code, 1);
+  assert.match(r.stderr, /output\.layout" is not allowed|profile-level choice/);
+});
+
+test('build --for: an overlay whose output is not a mapping is refused (exit 1)', () => {
+  const out = freshOut();
+  const r = run(['build', '--file', VALID, '--for', 'x', '--tailor-file', join(FIX, 'tailor-output-badmap.yaml'), '--out', out]);
+  assert.equal(r.code, 1);
+  assert.match(r.stderr, /"output" must be a mapping/);
+});
+
+test('build: an unknown --layout is rejected (exit 2)', () => {
+  const out = freshOut();
+  const r = run(['build', '--file', VALID, '--segment', 'product', '--layout', 'sideways', '--out', out]);
+  assert.equal(r.code, 2);
+  assert.match(r.stderr, /Unknown output layout/);
 });
 
 // ---------- role framing + multi-segment (Phase 2.2) ----------
@@ -484,11 +550,20 @@ test('lint: an id-less archived bullet gets a warn under the master view', () =>
 
 test('build: a traversal --for is slugged and stays inside the output dir', () => {
   const out = freshOut();
-  const r = run(['build', '--file', VALID, '--for', '../../pwn', '--segment', 'product', '--out', out, '--json']);
+  const r = run(['build', '--file', VALID, '--for', '../../pwn', '--segment', 'product', '--layout', 'flat', '--out', out, '--json']);
   assert.equal(r.code, 0, r.stderr);
   const html = JSON.parse(r.stdout).html;
   assert.equal(dirname(html), out, 'render must land directly inside --out, never above it');
   assert.match(html, /resume-pwn\.html$/, 'the ../.. is stripped to a safe slug');
+});
+
+test('build: a traversal --for stays inside the lead folder under per-lead-folder layout', () => {
+  const out = freshOut();
+  const r = run(['build', '--file', VALID, '--for', '../../pwn', '--segment', 'product', '--layout', 'per-lead-folder', '--out', out, '--json']);
+  assert.equal(r.code, 0, r.stderr);
+  const html = JSON.parse(r.stdout).html;
+  assert.equal(dirname(html), join(out, 'pwn'), 'the ../.. is stripped to a safe folder inside --out');
+  assert.ok(html.startsWith(out + '/'), 'the render must never escape --out');
 });
 
 test('build: a traversal --segment cannot escape the output dir', () => {

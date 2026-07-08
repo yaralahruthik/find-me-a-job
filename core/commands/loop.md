@@ -2,9 +2,9 @@
 
 You reached the interviews. This is the highest-leverage late-funnel work and the one place the tracker can't help you: what to prep for *this* company's rounds, what got asked, where it wobbled, and whether the level is even right. `/fh loop` runs that discipline and keeps it in a per-loop craft file. Aliased `interview`, `prep`, `debrief`.
 
-**Loop is one stage; each round is a dated event** (`core/RULES.md` §1) — this never adds new stages or per-round conversion math; early-career funnels don't need it. The funnel truth stays in `data/pipeline.yaml` (stage + `history`); the craft lives in `data/debriefs/<entry-id>.md`, which is **never gated and never counted**. Grade stays on inputs — active loop prep is always first priority, but prep hours are self-reported at `/fh review`, never tracked per loop (`core/RULES.md` §4). A **verbal** "we'd love to have you" is a note, never an offer (`core/RULES.md` §3).
+**Loop is one stage; each round is a dated event** (`core/RULES.md` §1) — this never adds new stages or per-round conversion math; early-career funnels don't need it. The funnel truth stays in `data/pipeline.yaml` (stage + `history`); the craft lives in the lead's folder at `data/out/<entry-id>/debrief.md` (flat layout: `data/debriefs/<entry-id>.md`), which is **never gated and never counted**. Grade stays on inputs — active loop prep is always first priority, but prep hours are self-reported at `/fh review`, never tracked per loop (`core/RULES.md` §4). A **verbal** "we'd love to have you" is a note, never an offer (`core/RULES.md` §3).
 
-Read `config/profile.yaml` (`proof_points`, `interview_assets`, positioning), `data/pipeline.yaml`, and the entry's `data/debriefs/<id>.md` if it exists.
+Read `config/profile.yaml` (`proof_points`, `interview_assets`, positioning), `data/pipeline.yaml`, and the entry's `data/out/<id>/debrief.md` if it exists.
 
 ## Steps
 
@@ -24,12 +24,12 @@ Prep is domain-specific, never generic — structured interview preparation on t
 - **Line up the proof to have ready.** From `proof_points` / `interview_assets`: the projects and numbers this loop will probe. Interviews find the fake number (`core/RULES.md` §8) — bring only what's true.
 - **Run the seniority-fit check.** Repeatedly reaching loops for roles a level up and losing is a *targeting* note, not a skill verdict. Name the honest read.
 
-Write it into `data/debriefs/<id>.md` (from `core/templates/debrief.template.md`; create the file if missing, fill the prep section). This is craft notes — no tracker write here.
+Write it into `data/out/<id>/debrief.md` (from `core/templates/debrief.template.md`; `mkdir -p` the lead folder and create the file if missing, fill the prep section). This is craft notes — no tracker write here.
 
 ### 4. Debrief — the post-mortem, while it's fresh
 
 Same day, before the memory fades — what was asked, where it wobbled:
-- **Append a dated round section** to `data/debriefs/<id>.md`: what was asked, where it wobbled, one next-prep note.
+- **Append a dated round section** to `data/out/<id>/debrief.md`: what was asked, where it wobbled, one next-prep note.
 - **Record the round on the tracker entry** through `core/commands/log.md`'s diff → write → `validate` ritual: append a dated `loop` event to the entry's `history` — `{ stage: loop, date: 2026-07-02, round: system-design, note: "wobbled on data modeling" }`. The round is one dated event; the depth lives in the debrief file. (A first loop round is the same append that moves the stage to `loop`; a `notes` line is optional on top.)
 - **Then close the file.** The note is for the next round's prep, not 1 a.m. replay; take the day if you need it, then stop.
 - **If it's a result:** a **written** offer moves the stage to `offer` (a verbal stays a note, §3). A **loss** closes the row honestly — `closed: true`, `closed_date`, and the stage stays where it reached; never move it backward or delete it (§3). Keep the relationship warm; loop→offer misses are usually not about you (frozen reqs, internal candidates, budget).
