@@ -45,6 +45,12 @@ links:
 # gap; an overlay can override it per application. (Education always shows the year.)
 # date_granularity: year
 
+# Optional. The page budget, default 1. `build` auto-trims the weakest bullets (never
+# pinned/included ones) to fit it, and reports every bullet it drops — so a resume can
+# never silently spill onto a second page. Raise it (e.g. 2) for senior/deep roles that
+# earn the space. Overridable per application in an overlay; --no-trim skips it.
+# max_pages: 1
+
 # Optional role presets. The same person is often framed different ways depending on
 # the JD — "Product Engineer" here, "Full-Stack Engineer" there. A preset bundles a
 # headline + a set of segments to include, so you name each framing once:

@@ -1,0 +1,25 @@
+version: 1
+name: Skills Test
+headline: Engineer
+email: skills@example.com
+experience:
+  - company: Co
+    role: Engineer
+    location: Remote
+    start: 2020-01
+    end: present
+    bullets:
+      - id: s1
+        text: "Shipped a feature to 10 teams and measured a 5 percent lift in weekly usage."
+        segments: []
+skills:
+  - group: Languages
+    items: [TypeScript, JavaScript, Python, SQL, Go, Rust]
+  - group: Frontend
+    items: [React, Next.js, Tailwind, shadcn, Vite, React Query]
+  - group: Backend
+    items: [Node.js, Postgres, Redis, gRPC]
+education:
+  - school: State University
+    degree: BSc, Computer Science
+    year: 2019

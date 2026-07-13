@@ -1,0 +1,14 @@
+version: 1
+name: Skills Test
+headline: Engineer
+email: skills@example.com
+experience:
+  - company: Co
+    role: Engineer
+    location: Remote
+    start: 2020-01
+    end: present
+    bullets:
+      - id: s1
+        text: "Shipped a feature to 10 teams and measured a 5 percent lift in weekly usage."
+        segments: []
