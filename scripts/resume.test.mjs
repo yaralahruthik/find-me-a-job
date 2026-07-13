@@ -461,6 +461,44 @@ test('build: the master view (--segment all) is never auto-trimmed', () => {
   assert.equal(res.trimmed.length, 0);
 });
 
+test('lint --for: the budget reflects the overlay max_pages, matching build', () => {
+  // tailor-maxpages2 sets max_pages: 2; resume-long (~55 lines) fits two pages, so no length flag.
+  const r = run(['lint', '--file', LONG, '--tailor-file', join(FIX, 'tailor-maxpages2.yaml'), '--json']);
+  assert.equal(r.code, 0, r.stderr);
+  const report = JSON.parse(r.stdout);
+  assert.equal(report.max_pages, 2, 'lint uses the overlay override, not the raw master default');
+  assert.equal(report.budget_lines, 104);
+  assert.ok(!report.flags.some((f) => f.severity === 'length' && f.where === 'document'), JSON.stringify(report.flags));
+});
+
+test('build: when non-bullet sections exceed the budget, it keeps the bullets and warns (never silent, never stripped bare)', () => {
+  const out = freshOut();
+  // resume-nonbullet-heavy has a ~5000-char summary; its floor exceeds one page on its own,
+  // so bullet-trimming can't help. It must NOT strip the two bullets, and must report fits: false.
+  const r = run(['build', '--file', join(FIX, 'resume-nonbullet-heavy.yaml'), '--segment', 'product', '--layout', 'flat', '--out', out, '--json']);
+  assert.equal(r.code, 0, r.stderr);
+  const res = JSON.parse(r.stdout);
+  assert.equal(res.bullets_included, 2, 'the resume is not stripped bare chasing an impossible budget');
+  assert.equal(res.trimmed.length, 0, 'no pointless bullet drops');
+  assert.equal(res.fits, false, 'it honestly reports it could not fit the budget');
+});
+
+test('build: an over-budget resume prints a WARNING in human output (never silent)', () => {
+  const out = freshOut();
+  const r = run(['build', '--file', join(FIX, 'resume-nonbullet-heavy.yaml'), '--segment', 'product', '--layout', 'flat', '--out', out]);
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stdout, /WARNING: over the 1 page budget/);
+  assert.match(r.stdout, /raise max_pages/);
+});
+
+test('build: a resume that fits (or trims to fit) reports fits: true', () => {
+  const out = freshOut();
+  const r = run(['build', '--file', LONG, '--segment', 'product', '--layout', 'flat', '--out', out, '--json']);
+  const res = JSON.parse(r.stdout);
+  assert.ok(res.bullets_included < 25, 'it trimmed to fit');
+  assert.equal(res.fits, true, 'bullet-trimming reached the budget');
+});
+
 test('render: em dashes become commas and en-dash ranges become hyphens; none ship', () => {
   const out = freshOut();
   const r = run(['build', '--file', DASH, '--segment', 'all', '--out', out, '--json']);

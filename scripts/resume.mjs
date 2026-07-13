@@ -482,8 +482,9 @@ function estimateLines(selected) {
 // keep and is never dropped; otherwise the oldest experience goes first, and within an
 // item the last-authored bullet first (authored order is priority order). It only ever
 // DROPS true bullets — never invents — and never touches the master record, only this
-// rendered view. Returns { selected, dropped } where dropped lists what was removed.
-// A concrete framing this is; the `all` master view is trimmed by the caller's choice.
+// rendered view. Returns { selected, dropped, fits }: `dropped` lists what was removed and
+// `fits` is whether the result is within budget. A concrete framing this is; the `all`
+// master view is trimmed by the caller's choice.
 function fitToPages(selected, overlay, budgetLines) {
   const keep = new Set([...(overlay.pin || []), ...(overlay.include || [])]);
   const out = {
@@ -491,6 +492,18 @@ function fitToPages(selected, overlay, budgetLines) {
     experience: (selected.experience || []).map((e) => ({ ...e, bullets: [...(e.bullets || [])] })),
     projects: (selected.projects || []).map((p) => ({ ...p, bullets: [...(p.bullets || [])] })),
   };
+  // Feasibility: the budget also counts header/summary/skills/education, which trimming can't
+  // touch. If even dropping every droppable bullet (keeping only pinned/included) still exceeds
+  // the budget, the overflow is in those sections — don't strip the resume bare chasing an
+  // impossible target. Return it untrimmed and let the caller warn honestly.
+  const keepOnly = (bullets) => (bullets || []).filter((b) => b && b.id && keep.has(b.id));
+  const floorView = {
+    ...out,
+    experience: out.experience.map((e) => ({ ...e, bullets: keepOnly(e.bullets) })),
+    projects: out.projects.map((p) => ({ ...p, bullets: keepOnly(p.bullets) })),
+  };
+  if (estimateLines(floorView) > budgetLines) return { selected: out, dropped: [], fits: false };
+
   const startKey = (e) => (e && e.start === 'present' ? '9999-12' : (e && e.start) || '');
   // Hold a direct reference to each candidate bullet and its containing array, so removals
   // stay correct as earlier ones splice the arrays (indexOf on identity, not a stale index).
@@ -517,7 +530,7 @@ function fitToPages(selected, overlay, budgetLines) {
     c.arr.splice(idx, 1);
     dropped.push({ id: (c.bullet && c.bullet.id) || null, company: c.item.company || c.item.name, text: c.bullet && c.bullet.text });
   }
-  return { selected: out, dropped };
+  return { selected: out, dropped, fits: estimateLines(out) <= budgetLines };
 }
 
 function lintResume(doc, segSet, segLabel, overlay = {}) {
@@ -601,7 +614,7 @@ function lintResume(doc, segSet, segLabel, overlay = {}) {
   const projHas = (selected.projects || []).some((p) => (p.bullets || []).length);
   if (expHas && projHas) add('info', 'document', 'You have work experience and a Projects section. Projects mainly convert doubt for early-career or extraordinary work; if your experience carries you, consider cutting it for space.');
 
-  const maxPages = doc.max_pages || 1;
+  const maxPages = selected.max_pages || 1;   // selected carries the overlay override; doc is the raw master
   const budget = maxPages * PAGE_BUDGET_LINES;
   const pageWord = maxPages === 1 ? 'one page' : `${maxPages} pages`;
   if (lineEstimate > budget) {
@@ -1129,8 +1142,17 @@ async function cmdBuild(args) {
     + selected.projects.reduce((n, p) => n + p.bullets.length, 0);
   const trimmed = dropped.map((d) => d.id || (d.text || '').slice(0, 40));
 
+  // Honesty: dropping bullets can't shrink the header/summary/skills/education. When those
+  // sections are what push the resume over, trimming leaves it over budget — say so plainly
+  // (never silently ship over budget). Prefer the real page count; fall back to the estimate.
+  const overBudget = trimEligible && (pages != null ? pages > maxPages : estimateLines(selected) > budgetLines);
+  const fits = !overBudget;
+  const overBudgetNote = overBudget
+    ? `over the ${maxPages} page${maxPages === 1 ? '' : 's'} budget after trimming bullets — the overflow is in the header/summary/skills/education. Trim those in config/resume.yaml, or raise max_pages.`
+    : null;
+
   if (args.flags.json) {
-    process.stdout.write(JSON.stringify({ ok: true, for: forId, role, segment: segLabel, layout, dir: outDir, html: htmlPath, pdf, pdf_note: pdfNote, bullets_included: bulletsIncluded, max_pages: maxPages, trimmed, pages, overlay_note: note, tracker_note: trackerNote }, null, 2) + '\n');
+    process.stdout.write(JSON.stringify({ ok: true, for: forId, role, segment: segLabel, layout, dir: outDir, html: htmlPath, pdf, pdf_note: pdfNote, bullets_included: bulletsIncluded, max_pages: maxPages, trimmed, pages, fits, overlay_note: note, tracker_note: trackerNote }, null, 2) + '\n');
     process.exit(0);
   }
   const framingLabel = role ? `role "${role}" (${segLabel})` : `segment "${segLabel}"`;
@@ -1140,6 +1162,7 @@ async function cmdBuild(args) {
   else if (args.flags.pdf) process.stdout.write(`  PDF:  skipped — ${pdfNote}\n        Open the HTML in a browser and Cmd/Ctrl+P → Save as PDF in the meantime.\n`);
   else process.stdout.write(`  (open the HTML and Cmd/Ctrl+P → Save as PDF, or re-run with --pdf)\n`);
   if (dropped.length) process.stdout.write(`  trimmed: ${dropped.length} bullet(s) to fit ${maxPages} page${maxPages === 1 ? '' : 's'}: ${trimmed.join(', ')}\n           pin/include them in the overlay to force-keep, or raise max_pages.\n`);
+  if (overBudgetNote) process.stdout.write(`  WARNING: ${overBudgetNote}\n`);
   if (note) process.stdout.write(`  note: ${note}\n`);
   if (trackerNote) process.stdout.write(`  note: ${trackerNote}\n`);
   process.exit(0);
