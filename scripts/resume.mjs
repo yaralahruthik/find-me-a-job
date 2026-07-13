@@ -235,6 +235,9 @@ function validateResume(doc) {
   if (doc.date_granularity !== undefined && !DATE_GRANULARITIES.includes(doc.date_granularity))
     errors.push(`"date_granularity" must be one of: ${DATE_GRANULARITIES.join(', ')}`);
 
+  if (doc.max_pages !== undefined && (!Number.isInteger(doc.max_pages) || doc.max_pages < 1))
+    errors.push('"max_pages" must be a positive integer (1, 2, …); build auto-trims the weakest bullets to fit it (default 1).');
+
   return errors;
 }
 
@@ -243,7 +246,7 @@ function validateResume(doc) {
 // An overlay tailors the master for one application. It may ONLY select, reorder,
 // and re-headline — never introduce content. Every bullet it names must already
 // exist in the master, which makes per-JD fabrication structurally impossible.
-const OVERLAY_KEYS = new Set(['version', 'entry', 'role', 'segment', 'headline', 'summary', 'date_granularity', 'output', 'pin', 'drop', 'include']);
+const OVERLAY_KEYS = new Set(['version', 'entry', 'role', 'segment', 'headline', 'summary', 'date_granularity', 'max_pages', 'output', 'pin', 'drop', 'include']);
 
 function validateOverlay(ov, masterIds) {
   const errors = [];
@@ -260,6 +263,7 @@ function validateOverlay(ov, masterIds) {
   if (ov.headline !== undefined && !isNonEmptyString(ov.headline)) errors.push('overlay "headline" must be a non-empty string');
   if (ov.summary !== undefined && ov.summary !== false && !isNonEmptyString(ov.summary)) errors.push('overlay "summary" must be a string, or false to hide it');
   if (ov.date_granularity !== undefined && !DATE_GRANULARITIES.includes(ov.date_granularity)) errors.push(`overlay "date_granularity" must be one of: ${DATE_GRANULARITIES.join(', ')}`);
+  if (ov.max_pages !== undefined && (!Number.isInteger(ov.max_pages) || ov.max_pages < 1)) errors.push('overlay "max_pages" must be a positive integer (1, 2, …)');
   if (ov.output !== undefined) {
     if (ov.output === null || typeof ov.output !== 'object' || Array.isArray(ov.output)) errors.push('overlay "output" must be a mapping (only resume_filename is allowed)');
     else for (const k of Object.keys(ov.output)) {
@@ -421,6 +425,7 @@ function selectForSegment(doc, segSet, overlay = {}) {
   };
   if (overlay.summary !== undefined) out.summary = overlay.summary === false ? undefined : overlay.summary;
   if (overlay.date_granularity !== undefined) out.date_granularity = overlay.date_granularity;
+  if (overlay.max_pages !== undefined) out.max_pages = overlay.max_pages;
   return out;
 }
 
@@ -429,13 +434,104 @@ function selectForSegment(doc, segSet, overlay = {}) {
 function wordCount(s) { return s.trim().split(/\s+/).length; }
 const hasDigit = (s) => /\d/.test(s);
 
-// One-page estimate, tied to the render CSS (11pt serif, 1.25 line-height,
-// Letter with ~13mm margins): the page holds ~52 text lines at ~90 chars each.
-// Experience/education headings are two rows (role/dates + company/location),
-// projects one; +1 spacing per item either way.
+// Page-length estimate, tied to the render CSS (11pt serif, 1.25 line-height,
+// Letter with ~13mm margins): one page holds ~PAGE_BUDGET_LINES text lines at
+// ~90 chars each. Experience headings are two rows (role/dates + company/location),
+// projects/education one; +1 spacing per item. The estimate counts every rendered
+// block — header, experience/projects, skills (with wrap), education, summary — so it
+// tracks the real render; the total budget for N pages is N * PAGE_BUDGET_LINES.
+// Calibrated against real renders: a one-page resume that fits estimates ~51 lines while
+// a spilled one estimates ~53+, so 52 is the honest boundary — it catches an overflow on
+// the estimate-only path (no --pdf) without over-trimming a genuine one-pager. When --pdf
+// is rendered, build recounts the actual pages and trims further if the estimate under-read.
+// `lint` reads it (length flag) and `build` auto-trims to N * PAGE_BUDGET_LINES.
 const HEADER_LINES = 6;      // name + headline + contact + surrounding space
 const CHARS_PER_LINE = 90;
-const ONE_PAGE_LINES = 52;
+const PAGE_BUDGET_LINES = 52;
+
+// Estimated rendered line count for a selected (segment + overlay) view. Shared by
+// lint and by build's max_pages auto-trim so the two agree on what "fits" means.
+function estimateLines(selected) {
+  const wrap = (s) => Math.max(1, Math.ceil((typeof s === 'string' ? s : '').length / CHARS_PER_LINE));
+  let lines = HEADER_LINES;
+  const scanItems = (items, kind) => {
+    for (const item of items || []) {
+      if (!((item.bullets || []).length)) continue; // empty items are not rendered (see renderSectionItems)
+      lines += kind === 'experience' ? 3 : 2;        // heading rows + spacing
+      for (const b of item.bullets || []) lines += wrap(b && b.text);
+    }
+  };
+  scanItems(selected.experience, 'experience');
+  scanItems(selected.projects, 'project');
+  if (isNonEmptyString(selected.summary)) lines += 1 + wrap(selected.summary); // heading + body
+  const skills = selected.skills || [];
+  if (skills.length) {
+    lines += 1;                                       // "Skills" heading
+    for (const s of skills) lines += wrap(`${s.group}: ${(s.items || []).join(', ')}`);
+  }
+  const edu = selected.education || [];
+  if (edu.length) {
+    lines += 1;                                       // "Education" heading
+    for (const e of edu) lines += e && e.degree ? 2 : 1;
+  }
+  return lines;
+}
+
+// Auto-trim a selected view down to a line budget by dropping the weakest bullets.
+// "Weakest" is deterministic and explainable: an overlay pin/include is an explicit
+// keep and is never dropped; otherwise the oldest experience goes first, and within an
+// item the last-authored bullet first (authored order is priority order). It only ever
+// DROPS true bullets — never invents — and never touches the master record, only this
+// rendered view. Returns { selected, dropped, fits }: `dropped` lists what was removed and
+// `fits` is whether the result is within budget. A concrete framing this is; the `all`
+// master view is trimmed by the caller's choice.
+function fitToPages(selected, overlay, budgetLines) {
+  const keep = new Set([...(overlay.pin || []), ...(overlay.include || [])]);
+  const out = {
+    ...selected,
+    experience: (selected.experience || []).map((e) => ({ ...e, bullets: [...(e.bullets || [])] })),
+    projects: (selected.projects || []).map((p) => ({ ...p, bullets: [...(p.bullets || [])] })),
+  };
+  // Feasibility: the budget also counts header/summary/skills/education, which trimming can't
+  // touch. If even dropping every droppable bullet (keeping only pinned/included) still exceeds
+  // the budget, the overflow is in those sections — don't strip the resume bare chasing an
+  // impossible target. Return it untrimmed and let the caller warn honestly.
+  const keepOnly = (bullets) => (bullets || []).filter((b) => b && b.id && keep.has(b.id));
+  const floorView = {
+    ...out,
+    experience: out.experience.map((e) => ({ ...e, bullets: keepOnly(e.bullets) })),
+    projects: out.projects.map((p) => ({ ...p, bullets: keepOnly(p.bullets) })),
+  };
+  if (estimateLines(floorView) > budgetLines) return { selected: out, dropped: [], fits: false };
+
+  const startKey = (e) => (e && e.start === 'present' ? '9999-12' : (e && e.start) || '');
+  // Hold a direct reference to each candidate bullet and its containing array, so removals
+  // stay correct as earlier ones splice the arrays (indexOf on identity, not a stale index).
+  const candidates = [];
+  const collect = (kindRank, items) => (items || []).forEach((item) => {
+    (item.bullets || []).forEach((b, bi) => {
+      if (b && b.id && keep.has(b.id)) return;
+      candidates.push({ kindRank, sk: kindRank === 0 ? startKey(item) : '~', bi, arr: item.bullets, bullet: b, item });
+    });
+  });
+  collect(0, out.experience);   // experience, oldest first
+  collect(1, out.projects);     // then projects
+  candidates.sort((a, b) =>
+    a.kindRank !== b.kindRank ? a.kindRank - b.kindRank
+      : a.sk !== b.sk ? (a.sk < b.sk ? -1 : 1)
+        : b.bi - a.bi);         // last-authored bullet first within the same item
+
+  const dropped = [];
+  let i = 0;
+  while (estimateLines(out) > budgetLines && i < candidates.length) {
+    const c = candidates[i++];
+    const idx = c.arr.indexOf(c.bullet);
+    if (idx === -1) continue;
+    c.arr.splice(idx, 1);
+    dropped.push({ id: (c.bullet && c.bullet.id) || null, company: c.item.company || c.item.name, text: c.bullet && c.bullet.text });
+  }
+  return { selected: out, dropped, fits: estimateLines(out) <= budgetLines };
+}
 
 function lintResume(doc, segSet, segLabel, overlay = {}) {
   const flags = [];
@@ -461,14 +557,11 @@ function lintResume(doc, segSet, segLabel, overlay = {}) {
   }
   if (REFERENCES_RE.test(doc.summary || '')) add('references', 'summary', 'drop "references available upon request"; it buys nothing and costs a line.');
 
-  let lineEstimate = HEADER_LINES;
   const scan = (items, kind) => {
     for (const item of items || []) {
       const label = item.company || item.name || kind;
-      lineEstimate += kind === 'experience' ? 3 : 2; // heading rows + spacing
       for (const b of item.bullets || []) {
         const text = typeof b.text === 'string' ? b.text : '';
-        lineEstimate += Math.max(1, Math.ceil(text.length / CHARS_PER_LINE));
         // Only the `all` (master) view sees archived bullets; an id-less one can
         // never be resurrected by an overlay include, so flag it here.
         const tags = Array.isArray(b.segments) ? b.segments.map((s) => String(s).toLowerCase()) : [];
@@ -492,6 +585,7 @@ function lintResume(doc, segSet, segLabel, overlay = {}) {
   const selected = selectForSegment(doc, segSet, overlay);
   scan(selected.experience, 'experience');
   scan(selected.projects, 'projects');
+  const lineEstimate = estimateLines(selected);
 
   // core/RESUME-RULES.md §2/§6: reverse-chronological order, and gaps as a framing
   // conversation. Dates are structured (YYYY-MM | present), so these are exact.
@@ -520,12 +614,15 @@ function lintResume(doc, segSet, segLabel, overlay = {}) {
   const projHas = (selected.projects || []).some((p) => (p.bullets || []).length);
   if (expHas && projHas) add('info', 'document', 'You have work experience and a Projects section. Projects mainly convert doubt for early-career or extraordinary work; if your experience carries you, consider cutting it for space.');
 
-  if (lineEstimate > ONE_PAGE_LINES) {
-    if (segSet.has('all')) add('info', 'document', `estimated ~${lineEstimate} lines for "all" — the master career record is allowed to run long; the one-page bar applies to the concrete framing you ship (lint with --segment/--role/--for).`);
-    else add('length', 'document', `estimated ~${lineEstimate} lines for segment "${segLabel}"; likely over one page. Re-tag the weakest bullets (archive, or a narrower segment) — never delete a true one.`);
+  const maxPages = selected.max_pages || 1;   // selected carries the overlay override; doc is the raw master
+  const budget = maxPages * PAGE_BUDGET_LINES;
+  const pageWord = maxPages === 1 ? 'one page' : `${maxPages} pages`;
+  if (lineEstimate > budget) {
+    if (segSet.has('all')) add('info', 'document', `estimated ~${lineEstimate} lines for "all" — the master career record is allowed to run long; the ${pageWord} bar applies to the concrete framing you ship (lint with --segment/--role/--for).`);
+    else add('length', 'document', `estimated ~${lineEstimate} lines for segment "${segLabel}"; likely over ${pageWord}. build --for auto-trims to fit; to control what goes, re-tag the weakest bullets (archive, or a narrower segment) or pin the keepers — never delete a true one.`);
   }
 
-  return { segment: segLabel, flags, line_estimate: lineEstimate };
+  return { segment: segLabel, flags, line_estimate: lineEstimate, budget_lines: budget, max_pages: maxPages };
 }
 
 // ---------- keyword coverage (informs, never gates) ----------
@@ -818,6 +915,22 @@ async function renderPdf(html, outPath, pageKey) {
   }
 }
 
+// Count pages in a Chromium-rendered PDF. Best-effort and dependency-free: count the
+// `/Type /Page` objects (verified accurate on this template's output), falling back to
+// the page-tree `/Count`. Returns null when the file can't be parsed — the caller then
+// simply relies on the line estimate, so a missing browser never breaks the build.
+function pdfPageCount(path) {
+  try {
+    const buf = readFileSync(path, 'latin1');
+    const objs = (buf.match(/\/Type\s*\/Page\b(?!s)/g) || []).length;
+    if (objs) return objs;
+    const m = buf.match(/\/Type\s*\/Pages\b[\s\S]*?\/Count\s+(\d+)/);
+    return m ? parseInt(m[1], 10) : null;
+  } catch {
+    return null;
+  }
+}
+
 // ---------- commands ----------
 
 function cmdValidate(args) {
@@ -962,9 +1075,16 @@ async function cmdBuild(args) {
   const pageKey = String(args.flags.page || 'letter').toLowerCase();
   if (!PAGE_FORMATS[pageKey]) die(2, `Unknown --page "${pageKey}" (allowed: letter | a4)`);
 
-  const selected = selectForSegment(doc, segSet, overlay);
-  selected.headline = headline;
-  const html = renderHtml(selected, segLabel, pageKey);
+  const rawSelected = selectForSegment(doc, segSet, overlay);
+  rawSelected.headline = headline;
+  const maxPages = rawSelected.max_pages || 1;
+  const budgetLines = maxPages * PAGE_BUDGET_LINES;
+  // Auto-trim to the page budget (default 1 page) by dropping the weakest bullets. The
+  // master view (--segment all) and --no-trim are exempt — the master may run long.
+  const trimEligible = !args.flags['no-trim'] && !segSet.has('all');
+  let selected = rawSelected, dropped = [];
+  if (trimEligible) ({ selected, dropped } = fitToPages(rawSelected, overlay, budgetLines));
+  let html = renderHtml(selected, segLabel, pageKey);
 
   // A tracked application (--for <id>) under the default layout gets its own data/out/<id>/ folder, with the
   // resume named after the user so it is send-ready with no renaming. Segment/role builds and layout: flat
@@ -984,33 +1104,65 @@ async function cmdBuild(args) {
   if (dirname(resolve(htmlPath)) !== resolve(outDir)) die(2, `Refusing to write outside the output directory: ${htmlPath}`);
   const baseResolved = resolve(baseDir), outResolved = resolve(outDir);
   if (outResolved !== baseResolved && !outResolved.startsWith(baseResolved + sep)) die(2, `Refusing to write outside the output directory: ${outDir}`);
-  writeFileSync(htmlPath, html);
-
-  const bulletsIncluded = selected.experience.reduce((n, e) => n + e.bullets.length, 0)
-    + selected.projects.reduce((n, p) => n + p.bullets.length, 0);
 
   const trackerNote = forId && entries && !pipeEntry
     ? `no pipeline entry "${forId}" — log this application with /fh so the funnel counts it.`
     : null;
 
-  let pdf = null, pdfNote = null;
+  let pdf = null, pdfNote = null, pages = null;
   if (args.flags.pdf) {
     const pdfPath = join(outDir, `${base}.pdf`);
-    const res = await renderPdf(html, pdfPath, pageKey);
-    if (res.ok) pdf = pdfPath;
-    else pdfNote = res.reason;
+    let res = await renderPdf(html, pdfPath, pageKey);
+    if (res.ok) {
+      pdf = pdfPath;
+      pages = pdfPageCount(pdfPath);
+      // Exact recount: the line estimate can under-count, so if the real render still
+      // overflows maxPages, tighten the budget, re-trim, and re-render. Bounded; with the
+      // calibrated estimate this rarely fires, and it is skipped when trimming is off.
+      let budget = budgetLines, guard = 0;
+      while (trimEligible && pages && pages > maxPages && guard < 5) {
+        budget -= Math.ceil(PAGE_BUDGET_LINES / 8);
+        const r = fitToPages(rawSelected, overlay, budget);
+        if (r.dropped.length <= dropped.length) break;   // nothing more can be dropped
+        ({ selected, dropped } = r);
+        html = renderHtml(selected, segLabel, pageKey);
+        res = await renderPdf(html, pdfPath, pageKey);
+        if (!res.ok) { pdf = null; pdfNote = res.reason; pages = null; break; }
+        pages = pdfPageCount(pdfPath);
+        guard++;
+      }
+    } else {
+      pdfNote = res.reason;
+    }
   }
 
+  writeFileSync(htmlPath, html);   // the file on disk matches the final (possibly re-trimmed) render
+
+  const bulletsIncluded = selected.experience.reduce((n, e) => n + e.bullets.length, 0)
+    + selected.projects.reduce((n, p) => n + p.bullets.length, 0);
+  const trimmed = dropped.map((d) => d.id || (d.text || '').slice(0, 40));
+
+  // Honesty: dropping bullets can't shrink the header/summary/skills/education. When those
+  // sections are what push the resume over, trimming leaves it over budget — say so plainly
+  // (never silently ship over budget). Prefer the real page count; fall back to the estimate.
+  const overBudget = trimEligible && (pages != null ? pages > maxPages : estimateLines(selected) > budgetLines);
+  const fits = !overBudget;
+  const overBudgetNote = overBudget
+    ? `over the ${maxPages} page${maxPages === 1 ? '' : 's'} budget after trimming bullets — the overflow is in the header/summary/skills/education. Trim those in config/resume.yaml, or raise max_pages.`
+    : null;
+
   if (args.flags.json) {
-    process.stdout.write(JSON.stringify({ ok: true, for: forId, role, segment: segLabel, layout, dir: outDir, html: htmlPath, pdf, pdf_note: pdfNote, bullets_included: bulletsIncluded, overlay_note: note, tracker_note: trackerNote }, null, 2) + '\n');
+    process.stdout.write(JSON.stringify({ ok: true, for: forId, role, segment: segLabel, layout, dir: outDir, html: htmlPath, pdf, pdf_note: pdfNote, bullets_included: bulletsIncluded, max_pages: maxPages, trimmed, pages, fits, overlay_note: note, tracker_note: trackerNote }, null, 2) + '\n');
     process.exit(0);
   }
   const framingLabel = role ? `role "${role}" (${segLabel})` : `segment "${segLabel}"`;
   const label = forId ? `application "${forId}" — ${framingLabel}` : framingLabel;
   process.stdout.write(`Built ${label}: ${bulletsIncluded} bullets.\n  HTML: ${htmlPath}\n`);
-  if (pdf) process.stdout.write(`  PDF:  ${pdf}\n`);
+  if (pdf) process.stdout.write(`  PDF:  ${pdf}${pages ? ` (${pages} page${pages === 1 ? '' : 's'})` : ''}\n`);
   else if (args.flags.pdf) process.stdout.write(`  PDF:  skipped — ${pdfNote}\n        Open the HTML in a browser and Cmd/Ctrl+P → Save as PDF in the meantime.\n`);
   else process.stdout.write(`  (open the HTML and Cmd/Ctrl+P → Save as PDF, or re-run with --pdf)\n`);
+  if (dropped.length) process.stdout.write(`  trimmed: ${dropped.length} bullet(s) to fit ${maxPages} page${maxPages === 1 ? '' : 's'}: ${trimmed.join(', ')}\n           pin/include them in the overlay to force-keep, or raise max_pages.\n`);
+  if (overBudgetNote) process.stdout.write(`  WARNING: ${overBudgetNote}\n`);
   if (note) process.stdout.write(`  note: ${note}\n`);
   if (trackerNote) process.stdout.write(`  note: ${trackerNote}\n`);
   process.exit(0);
@@ -1034,10 +1186,12 @@ else die(2, `Usage: resume.mjs <validate|lint|bullet|coverage|build> [--file <pa
                       which JD keywords appear in the resume you'd send (present), live elsewhere
                       in the master record (in_master, with bullet ids), or are absent (missing)
   build    [--segment a,b | --role <name>] [--for <id>] [--pdf]   render a resume
-           [--page letter|a4] [--out <dir>] [--layout per-lead-folder|flat]
+           [--page letter|a4] [--out <dir>] [--layout per-lead-folder|flat] [--no-trim]
     --segment a,b     union of segments to include (e.g. product,backend)
     --role <name>     a framing preset from roles: in config/resume.yaml (headline + segments)
     --for <entry-id>  tailor for one application; default layout writes data/out/<entry-id>/<your-name>.{html,pdf}
                       and reads the overlay from data/out/<entry-id>/tailor.yaml (legacy config/tailor/<entry-id>.yaml
                       still read as a fallback). The overlay selects/pins/drops master bullets, never invents.
-    --layout ...      override the profile output.layout for this build (flat keeps the old resume-<id>.* names)`);
+    --layout ...      override the profile output.layout for this build (flat keeps the old resume-<id>.* names)
+    --no-trim         skip the max_pages auto-trim and render the full selection (max_pages defaults to 1;
+                      build drops the weakest non-pinned bullets to fit it, reporting each one it removes)`);

@@ -18,7 +18,7 @@ Same shape as this system's *outcome + number + method*. "Cut reports load 6s to
 
 ## 2. Page economy
 
-- **One page per shipped framing.** The master record is unbounded; the artifact is not. (r/jobs, Harvard; Job Bank's two-page allowance is the outer bound, never the target.)
+- **One page per shipped framing.** The master record is unbounded; the artifact is not. (r/jobs, Harvard; Job Bank's two-page allowance is the outer bound, never the target.) This is the `max_pages` budget (default 1): `build` auto-trims the weakest non-pinned bullets to fit it and reports every drop, so a tailored resume never silently spills over. Raise `max_pages` to 2 for a genuinely senior role, or pin the bullets that must stay.
 - **~80% of the page on the target track.** Everything else earns its lines or gets re-tagged (`archive`, or a narrower segment), never deleted from the master. (r/jobs)
 - Compress or cut roles older than ~15 years. (Job Bank)
 - **5 to 7 bullets per role, at most.** More dilutes the best ones; `lint` notes the excess. (Job Bank)

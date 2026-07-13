@@ -44,7 +44,7 @@ Show the user the present/in_master/missing split and your bucketing.
 
 Give the exact command:
 - `node scripts/resume.mjs build --role <name> --pdf`, or `--segment a,b`, for a reusable framing; **or**
-- a per-application overlay when this JD needs specific pinning — author `data/out/<entry-id>/tailor.yaml` (legacy `config/tailor/<entry-id>.yaml` still read as a fallback) with `pin`/`drop` justified by the coverage read (float the bullets that hit the JD's top terms; drop the ones it doesn't care about). Show the overlay YAML before writing, then `build --for <entry-id>`. See `core/commands/resume.md`. **The overlay only selects the master's own true bullets — it never adds a claim to match the JD.**
+- a per-application overlay when this JD needs specific pinning — author `data/out/<entry-id>/tailor.yaml` (legacy `config/tailor/<entry-id>.yaml` still read as a fallback) with `pin`/`drop` justified by the coverage read (float the bullets that hit the JD's top terms; drop the ones it doesn't care about). Show the overlay YAML before writing, then `build --for <entry-id>`. See `core/commands/resume.md`. **The overlay only selects the master's own true bullets — it never adds a claim to match the JD.** Build auto-trims to `max_pages` (default 1) and reports any bullets it drops to fit; `pin` the ones that must survive the trim, or set `max_pages: 2` in the overlay for a senior role that earns two pages.
 
 Reuse a framing across similar JDs; reserve an overlay for genuinely role-specific pinning.
 

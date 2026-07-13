@@ -388,6 +388,117 @@ test('build --for: an overlay with a bad date_granularity is refused (exit 1)', 
   assert.match(r.stderr, /date_granularity/);
 });
 
+// ---------- max_pages (page budget + auto-trim) ----------
+
+test('validate: max_pages rejects a non-positive/non-integer value (exit 1)', () => {
+  const r = run(['validate', '--file', join(FIX, 'resume-bad-maxpages.yaml')]);
+  assert.equal(r.code, 1);
+  assert.match(r.stderr, /max_pages/);
+});
+
+test('build --for: an overlay with a bad max_pages is refused (exit 1)', () => {
+  const out = freshOut();
+  const r = run(['build', '--file', VALID, '--for', 'x', '--tailor-file', join(FIX, 'tailor-bad-maxpages.yaml'), '--out', out]);
+  assert.equal(r.code, 1);
+  assert.match(r.stderr, /max_pages/);
+});
+
+test('estimate: the line estimate counts the skills and education sections', () => {
+  // Same resume with and without skills/education; the sections must add to the estimate
+  // (this is the miss that once let a resume silently render onto a second page).
+  const none = JSON.parse(run(['lint', '--file', join(FIX, 'resume-skills-none.yaml'), '--segment', 'product', '--json']).stdout);
+  const withSkills = JSON.parse(run(['lint', '--file', join(FIX, 'resume-skills.yaml'), '--segment', 'product', '--json']).stdout);
+  assert.ok(withSkills.line_estimate > none.line_estimate, `skills/education should raise the estimate (${withSkills.line_estimate} vs ${none.line_estimate})`);
+});
+
+test('build: a concrete framing over the budget auto-trims to fit and reports the drops', () => {
+  const out = freshOut();
+  // resume-long is 25 always-on bullets (~55 estimated lines) — over the default 1-page budget.
+  const r = run(['build', '--file', LONG, '--segment', 'product', '--layout', 'flat', '--out', out, '--json']);
+  assert.equal(r.code, 0, r.stderr);
+  const res = JSON.parse(r.stdout);
+  assert.equal(res.max_pages, 1, 'default budget is one page');
+  assert.ok(res.bullets_included < 25, `should have trimmed below 25 (got ${res.bullets_included})`);
+  assert.ok(res.trimmed.length > 0, 'trimmed ids are reported');
+  assert.equal(res.trimmed.length, 25 - res.bullets_included, 'every dropped bullet is reported');
+});
+
+test('build: max_pages: 2 raises the budget so nothing is trimmed', () => {
+  const out = freshOut();
+  const r = run(['build', '--file', LONG, '--for', 'x', '--tailor-file', join(FIX, 'tailor-maxpages2.yaml'), '--layout', 'flat', '--out', out, '--json']);
+  assert.equal(r.code, 0, r.stderr);
+  const res = JSON.parse(r.stdout);
+  assert.equal(res.max_pages, 2);
+  assert.equal(res.bullets_included, 25, 'a two-page budget keeps every bullet the default trimmed');
+  assert.equal(res.trimmed.length, 0);
+});
+
+test('build --no-trim: renders the full selection with nothing trimmed', () => {
+  const out = freshOut();
+  const r = run(['build', '--file', LONG, '--segment', 'product', '--no-trim', '--layout', 'flat', '--out', out, '--json']);
+  assert.equal(r.code, 0, r.stderr);
+  const res = JSON.parse(r.stdout);
+  assert.equal(res.bullets_included, 25);
+  assert.equal(res.trimmed.length, 0);
+});
+
+test('build: a pinned bullet is never auto-dropped, even when it is the weakest', () => {
+  const out = freshOut();
+  // b25 is the last-authored bullet (the first the heuristic would drop); pinning must protect it.
+  const r = run(['build', '--file', LONG, '--for', 'x', '--tailor-file', join(FIX, 'tailor-maxpages-pin.yaml'), '--layout', 'flat', '--out', out, '--json']);
+  assert.equal(r.code, 0, r.stderr);
+  const res = JSON.parse(r.stdout);
+  assert.ok(res.trimmed.length > 0, 'it still trimmed to fit');
+  assert.ok(!res.trimmed.includes('b25'), `pinned b25 must survive (trimmed: ${res.trimmed.join(', ')})`);
+});
+
+test('build: the master view (--segment all) is never auto-trimmed', () => {
+  const out = freshOut();
+  const r = run(['build', '--file', LONG, '--segment', 'all', '--layout', 'flat', '--out', out, '--json']);
+  assert.equal(r.code, 0, r.stderr);
+  const res = JSON.parse(r.stdout);
+  assert.equal(res.bullets_included, 25, 'the master career record is allowed to run long');
+  assert.equal(res.trimmed.length, 0);
+});
+
+test('lint --for: the budget reflects the overlay max_pages, matching build', () => {
+  // tailor-maxpages2 sets max_pages: 2; resume-long (~55 lines) fits two pages, so no length flag.
+  const r = run(['lint', '--file', LONG, '--tailor-file', join(FIX, 'tailor-maxpages2.yaml'), '--json']);
+  assert.equal(r.code, 0, r.stderr);
+  const report = JSON.parse(r.stdout);
+  assert.equal(report.max_pages, 2, 'lint uses the overlay override, not the raw master default');
+  assert.equal(report.budget_lines, 104);
+  assert.ok(!report.flags.some((f) => f.severity === 'length' && f.where === 'document'), JSON.stringify(report.flags));
+});
+
+test('build: when non-bullet sections exceed the budget, it keeps the bullets and warns (never silent, never stripped bare)', () => {
+  const out = freshOut();
+  // resume-nonbullet-heavy has a ~5000-char summary; its floor exceeds one page on its own,
+  // so bullet-trimming can't help. It must NOT strip the two bullets, and must report fits: false.
+  const r = run(['build', '--file', join(FIX, 'resume-nonbullet-heavy.yaml'), '--segment', 'product', '--layout', 'flat', '--out', out, '--json']);
+  assert.equal(r.code, 0, r.stderr);
+  const res = JSON.parse(r.stdout);
+  assert.equal(res.bullets_included, 2, 'the resume is not stripped bare chasing an impossible budget');
+  assert.equal(res.trimmed.length, 0, 'no pointless bullet drops');
+  assert.equal(res.fits, false, 'it honestly reports it could not fit the budget');
+});
+
+test('build: an over-budget resume prints a WARNING in human output (never silent)', () => {
+  const out = freshOut();
+  const r = run(['build', '--file', join(FIX, 'resume-nonbullet-heavy.yaml'), '--segment', 'product', '--layout', 'flat', '--out', out]);
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stdout, /WARNING: over the 1 page budget/);
+  assert.match(r.stdout, /raise max_pages/);
+});
+
+test('build: a resume that fits (or trims to fit) reports fits: true', () => {
+  const out = freshOut();
+  const r = run(['build', '--file', LONG, '--segment', 'product', '--layout', 'flat', '--out', out, '--json']);
+  const res = JSON.parse(r.stdout);
+  assert.ok(res.bullets_included < 25, 'it trimmed to fit');
+  assert.equal(res.fits, true, 'bullet-trimming reached the budget');
+});
+
 test('render: em dashes become commas and en-dash ranges become hyphens; none ship', () => {
   const out = freshOut();
   const r = run(['build', '--file', DASH, '--segment', 'all', '--out', out, '--json']);

@@ -23,6 +23,9 @@ headline: "Frontend-leaning Product Engineer"   # override the headline for this
 summary: "…"                     # override the summary; or `false` to hide it entirely
 date_granularity: year           # override the master's date style for THIS application: year | month
                                  #   (lets you A/B test a date format per job without touching the master)
+max_pages: 1                     # override the page budget for THIS application (positive integer)
+                                 #   build auto-trims the weakest non-pinned bullets to fit it; raise to 2
+                                 #   for a senior role that earns two pages. --no-trim skips trimming entirely.
 
 output:                          # optional; per-application override of the profile output default
   resume_filename: "{name}-{role}"   # A/B test the sent filename for THIS job. Tokens: {name}, {role}, {company}.
